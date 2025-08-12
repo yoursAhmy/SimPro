@@ -142,7 +142,7 @@ function Sidebar() {
                 <ol className="flex flex-col space-y-1">
                   <button
                     className="w-[140px] h-[100px] m-auto mt-10 cursor-pointer"
-                    onClick={() => navigate("/companies")}
+                    onClick={() => navigate("/")}
                   >
                     <img src={companyLogo} alt="Company Logo" />
                   </button>

@@ -132,7 +132,7 @@ const [isLoading, setIsLoading] = useState(false);
               <Select
                 value={selectedPrebuildId || ""}
                 onValueChange={(selectedId) => {
-                  if (!companyId || !selectedId) return;
+                  if (companyId === null || selectedId === null || selectedId === "") return;
                     setIsLoading(true)
                   fetch(
                     `${BASE_URL}/prebuilds/prebuildcatalogs?companyID=${companyId}&prebuildID=${selectedId}`

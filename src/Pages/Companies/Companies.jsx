@@ -53,7 +53,7 @@ export default function Companies() {
     (company) => company.ID === +selectedCompany
   )?.ID;
 
-  if (!selectedCompanyID) {
+  if (selectedCompanyID === null ) {
     alert("Please select a company first");
     return;
   }
