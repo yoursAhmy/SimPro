@@ -198,7 +198,7 @@ const [isLoading, setIsLoading] = useState(false);
         {/* Catalog Table */}
         <div className="container mx-auto px-4 sm:px-6 py-6">
           <span className="text-2xl font-bold flex items-center justify-center w-full mb-5 ">
-            <h1>Catalog prebuild Items</h1>
+            <h1>Prebuild Catalog Items</h1>
           </span>
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
