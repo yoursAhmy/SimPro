@@ -27,11 +27,7 @@ export default function Companies() {
 }, [companyId]);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/user/companies`,{
-      headers: {
-        'ngrok-skip-browser-warning': "true"
-      }
-    })
+    fetch(`${BASE_URL}/user/companies`)
       .then((res) => {
         if (res.ok) {
           return res.json();
@@ -64,14 +60,7 @@ export default function Companies() {
 
   try {
     const response = await fetch(
-      `${BASE_URL}/prebuilds/allprebuilds?companyID=${selectedCompanyID}`,
-      {
-        headers: {
-          'ngrok-skip-browser-warning': "true"
-        }
-      }
-    );
-
+      `${BASE_URL}/prebuilds/allprebuilds?companyID=${selectedCompanyID}`);
     if (response.ok) {
       const data = await response.json();
 

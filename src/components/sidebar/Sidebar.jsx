@@ -36,11 +36,7 @@ function Sidebar() {
       console.error("Company ID not found");
       return;
     }
-    fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`,{
-        headers: {
-        'ngrok-skip-browser-warning': "true"
-      }
-    })
+    fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`)
       .then((res) => {
         if (res.ok) {
           console.log(res)

@@ -135,10 +135,7 @@ const [isLoading, setIsLoading] = useState(false);
                   if (!companyId || !selectedId) return;
                     setIsLoading(true)
                   fetch(
-                    `${BASE_URL}/prebuilds/prebuildcatalogs?companyID=${companyId}&prebuildID=${selectedId}`,
-                    {
-                      headers: { "ngrok-skip-browser-warning": "true" },
-                    }
+                    `${BASE_URL}/prebuilds/prebuildcatalogs?companyID=${companyId}&prebuildID=${selectedId}`
                   )
                     .then((response) => {
                       if (response.ok) return response.json();
