@@ -4,7 +4,7 @@ import "react-date-range/dist/theme/default.css";
 import { DateRange } from "react-date-range";
 import { subDays, format } from "date-fns";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import Select from "../../components/ui/select";
+import Select from "../../components/ui/Select";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { useSelector, useDispatch } from "react-redux";
 import { setPrebuildItem } from "../../store/slices/PrebuildSlice";
