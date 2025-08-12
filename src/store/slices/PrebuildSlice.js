@@ -4,6 +4,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   prebuilds: [],
   companyId: null,
+  prebuildItems: [],
+  selectedPrebuildId: null,
 };
 
 const prebuildSlice = createSlice({
@@ -18,8 +20,16 @@ const prebuildSlice = createSlice({
       state.prebuilds = [];
       state.companyId = null;
     },
+    setPrebuildItem: (state, action) => {
+      state.prebuildItems = action.payload.prebuildItem;
+      state.selectedPrebuildId = action.payload.selectedId; 
+    },
+    clearPrebuildItem: (state) => {
+      state.prebuildItems = [];
+      state.selectedPrebuildId = null;
+    }
   },
 });
 
-export const { setPrebuildData, clearPrebuildData } = prebuildSlice.actions;
+export const { setPrebuildData, setPrebuildItem, clearPrebuildItem, clearPrebuildData } = prebuildSlice.actions;
 export default prebuildSlice.reducer;

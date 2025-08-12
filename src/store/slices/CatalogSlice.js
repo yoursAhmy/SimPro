@@ -1,4 +1,4 @@
-// src/redux/slices/catalogSlice.js
+
 import { createSlice } from "@reduxjs/toolkit";
 
 const catalogSlice = createSlice({

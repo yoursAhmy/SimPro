@@ -1,27 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
-import { setCatalogs } from "../../store/slices/CatalogSlice"
-
-
+import { setCatalogs } from "../../store/slices/CatalogSlice";
+import companyLogo from "../../assets/simproLogo1.png";
+import { useNavigate } from "react-router-dom";
 
 function Sidebar() {
   const companyID = useSelector((state) => state.companyID);
   const BASE_URL = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
 
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const page = 1;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024); // Adjust breakpoint as needed
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true); // Always show sidebar on desktop
+      }
+    };
+
+    handleResize(); // Set initial state
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleCatalog = (companyID, page) => {
     if (!companyID) {
       console.error("Company ID not found");
       return;
     }
-    fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`)
+    fetch(
+      `${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`
+    )
       .then((res) => {
         if (res.ok) {
           return res.json();
@@ -42,7 +59,9 @@ function Sidebar() {
   };
 
   const closeSidebar = () => {
-    setIsOpen(false);
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
 
   const sidebarVariants = {
@@ -56,7 +75,11 @@ function Sidebar() {
   };
 
   const menuItems = [
-    { name: "Catalogs", path: "/companies/catalogs", action: () => handleCatalog(companyID, page) },
+    {
+      name: "Catalogs",
+      path: "/companies/catalogs",
+      action: () => handleCatalog(companyID, page),
+    },
     { name: "Prebuilds", path: "/companies/prebuilds" },
     { name: "Quotes", path: "/companies/quotes" },
     { name: "Jobs", path: "/companies/jobs" },
@@ -65,39 +88,28 @@ function Sidebar() {
 
   return (
     <>
-      {/* Hamburger Button */}
-      <button
-        onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-lg"
-        aria-label="Toggle menu"
-      >
-        <div
-          className={`w-6 h-0.5 bg-gray-700 mb-1.5 transition-all ${
-            isOpen ? "rotate-45 translate-y-2" : ""
-          }`}
-        ></div>
-        <div
-          className={`w-6 h-0.5 bg-gray-700 mb-1.5 transition-all ${
-            isOpen ? "opacity-0" : "opacity-100"
-          }`}
-        ></div>
-        <div
-          className={`w-6 h-0.5 bg-gray-700 transition-all ${
-            isOpen ? "-rotate-45 -translate-y-2" : ""
-          }`}
-        ></div>
-      </button>
+      {/* Hamburger Button - Only shown on mobile */}
 
-      {/* Overlay */}
+      {isMobile && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-lg lg:hidden"
+          aria-label="Toggle menu"
+        >
+          <Bars3Icon className="h-6 w-6 text-gray-700" />
+        </button>
+      )}
+
+      {/* Overlay - Only shown on mobile when sidebar is open */}
       <AnimatePresence>
-        {isOpen && (
+        {isMobile && isOpen && (
           <motion.div
             initial="closed"
             animate="open"
             exit="closed"
             variants={overlayVariants}
             onClick={closeSidebar}
-            className="fixed inset-0 bg-black z-40"
+            className="fixed inset-0 bg-black z-40 lg:hidden"
             transition={{ duration: 0.2 }}
           />
         )}
@@ -106,26 +118,38 @@ function Sidebar() {
       {/* Sidebar */}
       <AnimatePresence>
         <motion.div
-          initial="closed"
+          initial={isMobile ? "closed" : "open"}
           animate={isOpen ? "open" : "closed"}
           exit="closed"
           variants={sidebarVariants}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed w-[250px] bg-white border-r border-gray-200 h-screen z-50 shadow-lg"
+          className={`fixed w-[250px] bg-white border-r border-gray-200 h-screen z-50 shadow-lg ${
+            !isMobile ? "lg:relative lg:shadow-none lg:z-auto" : ""
+          }`}
         >
           <div className="flex flex-col h-full">
-            {/* Close Button */}
-            <button
-              onClick={closeSidebar}
-              className="self-end p-4 text-gray-500 hover:text-gray-700"
-              aria-label="Close menu"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
+            {/* Close Button - Only shown on mobile */}
+            {isMobile && (
+              <button
+                onClick={closeSidebar}
+                className="self-end p-4 text-gray-500 hover:text-gray-700 lg:hidden"
+                aria-label="Close menu"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            )}
 
             {/* Menu Items */}
             <div className="flex flex-col py-2 overflow-y-auto">
               <ol className="flex flex-col space-y-1">
+                
+                <button className="w-[140px] h-[100px] m-auto mt-10"
+                onClick={() => navigate("/companies")} >
+                  <img src={companyLogo} alt="Company Logo" />
+                </button>
+                
+                
+
                 {menuItems.map((item) => (
                   <li key={item.name}>
                     <NavLink
