@@ -40,8 +40,7 @@ function Sidebar() {
       .then((res) => {
         if (res.ok) {
           console.log(res)
-           res.json()
-          console.log(res)
+          return res.json();
         }
         throw new Error("Failed to fetch catalogs");
       })

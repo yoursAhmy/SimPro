@@ -10,7 +10,6 @@ import Jobs from "../Pages/jobs/Jobs";
 import Suppliers from "../Pages/suppliers/Suppliers";
 import Quotes from "../Pages/quotes/Quotes";
 
-
 const router =  createBrowserRouter([
     {
         path: "",
