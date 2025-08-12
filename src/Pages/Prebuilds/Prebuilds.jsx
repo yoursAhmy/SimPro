@@ -21,6 +21,7 @@ export default function Prebuilds() {
 
   const BASE_URL = import.meta.env.VITE_API_URL;
 
+const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDateRange, setShowDateRange] = useState(false);
   const [dateRange, setDateRange] = useState([
@@ -132,7 +133,7 @@ export default function Prebuilds() {
                 value={selectedPrebuildId || ""}
                 onValueChange={(selectedId) => {
                   if (!companyId || !selectedId) return;
-
+                    setIsLoading(true)
                   fetch(
                     `${BASE_URL}/prebuilds/prebuildcatalogs?companyID=${companyId}&prebuildID=${selectedId}`,
                     {
@@ -151,7 +152,8 @@ export default function Prebuilds() {
                         })
                       );
                     })
-                    .catch((err) => console.error(err));
+                    .catch((err) => console.error(err))
+                    .finally(() => setIsLoading(false));
                 }}
                 placeholder="Select prebuild"
                 options={prebuilds.map((pb) => ({
@@ -159,6 +161,7 @@ export default function Prebuilds() {
                   value: pb?.ID || "",
                 }))}
               />
+              
             </div>
 
             {/* Date Range Picker */}
@@ -202,50 +205,58 @@ export default function Prebuilds() {
           </span>
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
-              
-              {prebuildItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
-                    No catalog items in this prebuild.
-                  </p>
-                </div>
-              ) : (
-                
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Quantity
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Price
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentItems.map((catalogItem, idx) => (
-                      <tr
-                        key={catalogItem?.Catalog?.ID || `row-${idx}`}
-                        className="hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {catalogItem?.Catalog?.Name || "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {catalogItem?.Quantity ?? "—"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {catalogItem?.Catalog?.TradePrice ?? "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+
+  {isLoading ? (
+    // Loading spinner dikhaayen
+    <div className="flex justify-center py-8 text-blue-600 font-semibold text-lg">
+    Loading catalog items...
+  </div>
+) : prebuildItems.length === 0 ? (
+  <div className="text-center py-8">
+    <p className="text-gray-500">No catalog items in this prebuild.</p>
+  </div>
+  ) : prebuildItems.length === 0 ? (
+    // Jab koi catalog item nahi ho tab ye dikhe
+    <div className="text-center py-8">
+      <p className="text-gray-500">No catalog items in this prebuild.</p>
+    </div>
+  ) : (
+    // Normal table jab items ho
+    <table className="min-w-full divide-y divide-gray-200">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Name
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Quantity
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Price
+          </th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+        {currentItems.map((catalogItem, idx) => (
+          <tr
+            key={catalogItem?.Catalog?.ID || `row-${idx}`}
+            className="hover:bg-gray-50"
+          >
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              {catalogItem?.Catalog?.Name || "N/A"}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {catalogItem?.Quantity ?? "—"}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {catalogItem?.Catalog?.TradePrice ?? "—"}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )}
+</div>
           </div>
         </div>
 

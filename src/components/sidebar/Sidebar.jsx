@@ -9,7 +9,7 @@ import companyLogo from "../../assets/simproLogo1.png";
 import { useNavigate } from "react-router-dom";
 
 function Sidebar() {
-  const companyID = useSelector((state) => state.companyID);
+  const companyID = useSelector((state) => state.prebuild?.companyId);
   const BASE_URL = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
 
@@ -20,9 +20,9 @@ function Sidebar() {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024); // Adjust breakpoint as needed
+      setIsMobile(window.innerWidth < 1024);
       if (window.innerWidth >= 1024) {
-        setIsOpen(true); // Always show sidebar on desktop
+        setIsOpen(true);
       }
     };
 
@@ -36,12 +36,16 @@ function Sidebar() {
       console.error("Company ID not found");
       return;
     }
-    fetch(
-      `${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`
-    )
+    fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`,{
+        headers: {
+        'ngrok-skip-browser-warning': "true"
+      }
+    })
       .then((res) => {
         if (res.ok) {
-          return res.json();
+          console.log(res)
+           res.json()
+          console.log(res)
         }
         throw new Error("Failed to fetch catalogs");
       })
@@ -89,7 +93,6 @@ function Sidebar() {
   return (
     <>
       {/* Hamburger Button - Only shown on mobile */}
-
       {isMobile && (
         <button
           onClick={toggleSidebar}
@@ -116,65 +119,66 @@ function Sidebar() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <AnimatePresence>
-        <motion.div
-          initial={isMobile ? "closed" : "open"}
-          animate={isOpen ? "open" : "closed"}
-          exit="closed"
-          variants={sidebarVariants}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={`fixed w-[250px] bg-white border-r border-gray-200 h-screen z-50 shadow-lg ${
-            !isMobile ? "lg:relative lg:shadow-none lg:z-auto" : ""
-          }`}
-        >
-          <div className="flex flex-col h-full">
-            {/* Close Button - Only shown on mobile */}
-            {isMobile && (
-              <button
-                onClick={closeSidebar}
-                className="self-end p-4 text-gray-500 hover:text-gray-700 lg:hidden"
-                aria-label="Close menu"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            )}
-
-            {/* Menu Items */}
-            <div className="flex flex-col py-2 overflow-y-auto">
-              <ol className="flex flex-col space-y-1">
-                
-                <button className="w-[140px] h-[100px] m-auto mt-10"
-                onClick={() => navigate("/companies")} >
-                  <img src={companyLogo} alt="Company Logo" />
+      <div className="sticky top-0 h-screen z-30">
+        <AnimatePresence>
+          <motion.div
+            initial={isMobile ? "closed" : "open"}
+            animate={isOpen ? "open" : "closed"}
+            exit="closed"
+            variants={sidebarVariants}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className={`w-[250px] h-full bg-white border-r border-gray-200 shadow-lg overflow-hidden ${
+              !isMobile ? "lg:relative lg:shadow-none" : "fixed"
+            }`}
+          >
+            <div className="flex flex-col h-full">
+              {/* Close Button - Only shown on mobile */}
+              {isMobile && (
+                <button
+                  onClick={closeSidebar}
+                  className="self-end p-4 text-gray-500 hover:text-gray-700 lg:hidden"
+                  aria-label="Close menu"
+                >
+                  <XMarkIcon className="h-6 w-6" />
                 </button>
-                
-                
+              )}
 
-                {menuItems.map((item) => (
-                  <li key={item.name}>
-                    <NavLink
-                      to={item.path}
-                      onClick={() => {
-                        if (item.action) item.action();
-                        closeSidebar();
-                      }}
-                      className={({ isActive }) =>
-                        `block px-6 py-3 font-medium rounded-md transition-colors duration-200 ${
-                          isActive
-                            ? "bg-blue-50 text-blue-600 border-l-4 border-blue-500"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        }`
-                      }
-                    >
-                      {item.name}
-                    </NavLink>
-                  </li>
-                ))}
-              </ol>
+              {/* Menu Items */}
+              <div className="flex flex-col py-2 overflow-y-auto">
+                <ol className="flex flex-col space-y-1">
+                  <button
+                    className="w-[140px] h-[100px] m-auto mt-10 cursor-pointer"
+                    onClick={() => navigate("/companies")}
+                  >
+                    <img src={companyLogo} alt="Company Logo" />
+                  </button>
+
+                  {menuItems.map((item) => (
+                    <li key={item.name}>
+                      <NavLink
+                        to={item.path}
+                        onClick={() => {
+                          if (item.action) item.action();
+                          closeSidebar();
+                        }}
+                        className={({ isActive }) =>
+                          `block px-6 py-3 font-medium rounded-md transition-colors duration-200 ${
+                            isActive
+                              ? "bg-blue-50 text-blue-600 border-l-4 border-blue-500"
+                              : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                          }`
+                        }
+                      >
+                        {item.name}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </>
   );
 }
