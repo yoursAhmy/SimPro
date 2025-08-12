@@ -170,34 +170,7 @@ const Signup = () => {
           )}
 
           <form onSubmit={signupHandler} className="space-y-6">
-            {/* <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            > */}
-              {/* <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1 cursor-pointer">
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                value={formData.username}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-lg border ${errors.username ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 cursor-text`}
-                placeholder="Enter your username"
-              />
-              {errors.username && (
-                <motion.p 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="mt-1 text-sm text-red-600"
-                >
-                  {errors.username}
-                </motion.p>
-              )}
-            </motion.div> */}
-
+        
             <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}

@@ -6,8 +6,7 @@ function Navbar() {
   return (
     <nav>
         <NavLink to='/user/companies'></NavLink>
-        {/* <NavLink to={'/user/signin'}></NavLink> */}
-        {/* <NavLink to={'/user/signup'}></NavLink> */}
+        
     </nav>
   )
 }

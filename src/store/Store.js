@@ -4,7 +4,7 @@ import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 
 // Import your slices
-import prebuildReducer from "./slices/prebuildSlice";
+import prebuildReducer from "./slices/PrebuildSlice";
 import catalogReducer from "./slices/CatalogSlice"; 
 
 const persistConfig = {

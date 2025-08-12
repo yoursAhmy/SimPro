@@ -1,45 +1,4 @@
 
-// import { useNavigate} from "react-router-dom"
-
-// function Login() {
-//   const navigate = useNavigate();
-
-//   const loginHandler = () => {
-//     fetch(`${import.meta.env.VITE_BASE_URL}/user/login`)
-//       .then((res) => {
-//         if (res.status >= 200 && res.status < 300) {
-//           navigate("/user/companies")
-//         }
-//       })
-//       .catch((err) => {
-//         console.error("Login error:", err);
-//       });
-//   };
-
-//   return (
-//     <div className="flex justify-center items-center h-screen bg-black">
-//       <button
-//         className="
-//           px-8 py-3 
-//           bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 
-//           text-white text-lg font-semibold tracking-wide 
-//           rounded-xl 
-//           shadow-md hover:shadow-xl 
-//           hover:scale-105 active:scale-100 
-//           transition-transform duration-300 ease-in-out
-//           focus:outline-none focus:ring-4 focus:ring-pink-300 focus:ring-opacity-50
-//         "
-//         onClick={loginHandler}
-//       >
-//         Login
-//       </button>
-//     </div>
-//   );
-// }
-
-// export default Login;
-
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';

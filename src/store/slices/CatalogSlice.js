@@ -1,4 +1,4 @@
-// src/redux/slices/catalogSlice.js
+
 import { createSlice } from "@reduxjs/toolkit";
 
 const catalogSlice = createSlice({
@@ -10,8 +10,11 @@ const catalogSlice = createSlice({
     setCatalogs: (state, action) => {
       state.catalogs = action.payload;
     },
+    clearCatalogs: (state) => {
+      state.catalogs= [];
+    }
   },
 });
 
-export const { setCatalogs } = catalogSlice.actions;
+export const { setCatalogs, clearCatalogs } = catalogSlice.actions;
 export default catalogSlice.reducer;

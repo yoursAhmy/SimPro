@@ -3,10 +3,17 @@ import companylogo from "../../assets/companyLogo.png";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setPrebuildData } from "../../store/slices/PrebuildSlice";
+import { useSelector } from "react-redux";
+import { clearPrebuildItem } from "../../store/slices/PrebuildSlice";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import {clearCatalogs} from "../../store/slices/CatalogSlice"
+
 
 export default function Companies() {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const companyId = useSelector((state) => state.prebuild.companyId);
 
   const BASE_URL = import.meta.env.VITE_API_URL;
   
@@ -15,11 +22,14 @@ export default function Companies() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    fetch(`${BASE_URL}/user/companies`,{
-      headers: {
-        'ngrok-skip-browser-warning': "true"
-      }
-    })
+  if (companyId) {
+    dispatch(clearPrebuildItem());
+    dispatch(clearCatalogs())
+  }
+}, [companyId]);
+
+  useEffect(() => {
+    fetch(`${BASE_URL}/user/companies`)
       .then((res) => {
         if (res.ok) {
           return res.json();
@@ -39,18 +49,20 @@ export default function Companies() {
   }, [BASE_URL]);
 
   const handleNext = async () => {
-    const selectedCompanyID = companies.find(
-      (company) => company.ID === +selectedCompany
-    )?.ID;
+  const selectedCompanyID = companies.find(
+    (company) => company.ID === +selectedCompany
+  )?.ID;
 
-    if (!selectedCompanyID) {
-      alert("Please select a company first");
-      return;
-    }
+  if (!selectedCompanyID) {
+    alert("Please select a company first");
+    return;
+  }
+
+  setIsLoading(true);  // Loading start
+
+  try {
     const response = await fetch(
-      `http://192.168.1.50:3000/user/prebuilds?companyID=${selectedCompanyID}`
-    );
-
+      `${BASE_URL}/prebuilds/allprebuilds?companyID=${selectedCompanyID}`);
     if (response.ok) {
       const data = await response.json();
 
@@ -60,9 +72,18 @@ export default function Companies() {
           companyId: selectedCompanyID,
         })
       );
+
       navigate("/companies/prebuilds");
+    } else {
+      alert("Failed to fetch prebuilds");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong");
+  } finally {
+    setIsLoading(false); 
+  }
+};
 
   return (
     <div
@@ -97,84 +118,22 @@ export default function Companies() {
 
         <div className="flex justify-end mt-6">
           <button
-            onClick={handleNext}
-            className="px-8 py-3 text-lg font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all transform hover:scale-105"
-          >
-            Get Prebuilds →
-          </button>
+  onClick={handleNext}
+  disabled={isLoading}
+  className={`px-8 py-3 text-lg font-medium text-white rounded-lg shadow-md focus:outline-none transition-all transform hover:scale-105
+    ${isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"}`}
+>
+  {isLoading ? (
+    <>
+      <ArrowPathIcon className="animate-spin h-6 w-6 mr-2 inline-block" />
+      Loading...
+    </>
+  ) : (
+    "Get Prebuilds →"
+  )}
+</button>
         </div>
       </div>
     </div>
   );
 }
-
-// // src/pages/companies/Companies.jsx
-// import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import companylogo from "../../assets/companyLogo.png";
-// import { useDispatch } from "react-redux";
-// import { setPrebuildData } from "../../store/slices/PrebuildSlice"
-
-// export default function Companies() {
-//   const [companies, setCompanies] = useState([]);
-//   const [selectedCompany, setSelectedCompany] = useState("");
-
-//   const BASE_URL = import.meta.env.VITE_API_URL;
-//   const token = localStorage.getItem("token");
-//   const navigate = useNavigate();
-//   const dispatch = useDispatch();
-
-//   useEffect(() => {
-//     fetch(`${BASE_URL}/user/companies`)
-//       .then((res) => res.json())
-//       .then((data) => setCompanies(data.companies || []))
-//       .catch((err) => console.error("Error while fetching companies", err));
-//   }, [BASE_URL, token]);
-
-//   const handleNext = async () => {
-//     const selectedCompanyID = companies.find(
-//       (company) => company.ID === +selectedCompany
-//     )?.ID;
-
-//     if (!selectedCompanyID) {
-//       alert("Please select a company first");
-//       return;
-//     }
-
-//     const response = await fetch(
-//       `${BASE_URL}/user/prebuilds?companyID=${selectedCompanyID}`
-//     );
-
-//     if (response.ok) {
-//       const data = await response.json();
-
-//       // Save data to Redux Persist
-//       dispatch(
-//         setPrebuildData({
-//           prebuilds: data.prebuilds,
-//           companyId: selectedCompanyID,
-//         })
-//       );
-
-//       navigate("/companies/prebuilds");
-//     }
-//   };
-
-//   return (
-//     <div>
-//       <select
-//         value={selectedCompany}
-//         onChange={(e) => setSelectedCompany(e.target.value)}
-//       >
-//         <option value="">Select a company</option>
-//         {companies.map((company) => (
-//           <option key={company.ID} value={company.ID}>
-//             {company.Name}
-//           </option>
-//         ))}
-//       </select>
-
-//       <button onClick={handleNext}>Get Prebuilds →</button>
-//     </div>
-//   );
-// }
