@@ -6,6 +6,7 @@ import { setPrebuildData } from "../../store/slices/PrebuildSlice";
 import { useSelector } from "react-redux";
 import { clearPrebuildItem } from "../../store/slices/PrebuildSlice";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import {clearCatalogs} from "../../store/slices/CatalogSlice"
 
 
 export default function Companies() {
@@ -23,6 +24,7 @@ export default function Companies() {
   useEffect(() => {
   if (companyId) {
     dispatch(clearPrebuildItem());
+    dispatch(clearCatalogs())
   }
 }, [companyId]);
 

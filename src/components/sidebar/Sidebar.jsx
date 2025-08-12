@@ -39,7 +39,6 @@ function Sidebar() {
     fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`)
       .then((res) => {
         if (res.ok) {
-          console.log(res)
           return res.json();
         }
         throw new Error("Failed to fetch catalogs");
