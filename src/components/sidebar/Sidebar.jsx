@@ -32,7 +32,7 @@ function Sidebar() {
   }, []);
 
   const handleCatalog = (companyID, page) => {
-    if (!companyID) {
+    if (companyID === null ) {
       console.error("Company ID not found");
       return;
     }
