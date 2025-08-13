@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import companylogo from "../../assets/companyLogo.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setPrebuildData } from "../../store/slices/PrebuildSlice";
+import { setPrebuildData, clearPrebuildItem } from "../../store/slices/PrebuildSlice";
 import { useSelector } from "react-redux";
-import { clearPrebuildItem } from "../../store/slices/PrebuildSlice";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import {clearCatalogs} from "../../store/slices/CatalogSlice"
-
+import { clearCatalogs } from "../../store/slices/CatalogSlice";
 
 export default function Companies() {
   const [companies, setCompanies] = useState([]);
@@ -17,96 +15,96 @@ export default function Companies() {
 
   const BASE_URL = import.meta.env.VITE_API_URL;
   
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
 
+  // Clear company data when component mounts or route changes
   useEffect(() => {
-  if (companyId) {
     dispatch(clearPrebuildItem());
-    dispatch(clearCatalogs())
-  }
-}, [companyId]);
+    dispatch(clearCatalogs());
+    setSelectedCompany("");
+  }, [dispatch, location.pathname]);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/user/companies`)
-      .then((res) => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/user/companies`);
         if (res.ok) {
-          return res.json();
+          const data = await res.json();
+          if (data?.companies) {
+            setCompanies(data.companies);
+            if (data.companies.length > 0 && !selectedCompany) {
+              setSelectedCompany(data.companies[0].ID.toString());
+            }
+          }
         }
-      })
-      .then((data) => {
-        if (data && data.companies) {
-          setCompanies(data.companies);
-        } else {
-          console.error("Unexpected data format:", data);
-        }
-      })
+      } catch (err) {
+        console.error("Error fetching companies", err);
+      }
+    };
 
-      .catch((err) => {
-        console.log("Error while fetching companies", err);
-      });
-  }, [BASE_URL]);
+    fetchCompanies();
+  }, [BASE_URL, selectedCompany]);
 
   const handleNext = async () => {
-  const selectedCompanyID = companies.find(
-    (company) => company.ID === +selectedCompany
-  )?.ID;
-
-  if (selectedCompanyID === null ) {
-    alert("Please select a company first");
-    return;
-  }
-
-  setIsLoading(true);  // Loading start
-
-  try {
-    const response = await fetch(
-      `${BASE_URL}/prebuilds/allprebuilds?companyID=${selectedCompanyID}`);
-    if (response.ok) {
-      const data = await response.json();
-
-      dispatch(
-        setPrebuildData({
-          prebuilds: data.prebuilds,
-          companyId: selectedCompanyID,
-        })
-      );
-
-      navigate("/companies/prebuilds");
-    } else {
-      alert("Failed to fetch prebuilds");
+    if (!selectedCompany) {
+      alert("Please select a company first");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    alert("Something went wrong");
-  } finally {
-    setIsLoading(false); 
-  }
-};
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        `${BASE_URL}/prebuilds/allprebuilds?companyID=${selectedCompany}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        dispatch(
+          setPrebuildData({
+            prebuilds: data.prebuilds,
+            companyId: parseInt(selectedCompany),
+          })
+        );
+        navigate("/companies/prebuilds");
+      } else {
+        alert("Failed to fetch prebuilds");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div
-      className="flex flex-col items-center justify-center min-h-screen"
-      style={{
-        background: "linear-gradient(135deg, #1f1c2c 0%, #928DAB 100%)",
-      }}
-    >
-      <div className="flex flex-col w-full max-w-4xl p-8 bg-white rounded-lg shadow-xl backdrop-blur-sm bg-opacity-90">
-        <div className="flex items-center justify-between w-full mb-8">
-          <div className="flex items-center w-1/2">
-            <img
-              src={companylogo}
-              alt="Company"
-              className="h-12 w-12 mr-4 object-contain"
-            />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 sm:p-6">
+      <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden mx-4">
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <div className="flex items-center space-x-3">
+              <img
+                src={companylogo}
+                alt="Company Logo"
+                className="h-10 w-10 sm:h-12 sm:w-12 object-contain"
+              />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Select Company</h1>
+            </div>
+          </div>
+
+          <div className="mb-6 sm:mb-8">
+            <label htmlFor="company-select" className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+              Available Companies
+            </label>
             <select
+              id="company-select"
               value={selectedCompany}
               onChange={(e) => setSelectedCompany(e.target.value)}
-              className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-              placeholder="Select a Company"
+              className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
-              <option value="">Select a company</option>
               {companies.map((company) => (
                 <option key={company.ID} value={company.ID}>
                   {company.Name}
@@ -114,24 +112,30 @@ export default function Companies() {
               ))}
             </select>
           </div>
-        </div>
 
-        <div className="flex justify-end mt-6">
-          <button
-  onClick={handleNext}
-  disabled={isLoading}
-  className={`px-8 py-3 text-lg font-medium text-white rounded-lg shadow-md focus:outline-none transition-all transform hover:scale-105
-    ${isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"}`}
->
-  {isLoading ? (
-    <>
-      <ArrowPathIcon className="animate-spin h-6 w-6 mr-2 inline-block" />
-      Loading...
-    </>
-  ) : (
-    "Next →"
-  )}
-</button>
+          <div className="flex justify-end">
+            <button
+              onClick={handleNext}
+              disabled={isLoading || !selectedCompany}
+              className={`px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-lg font-medium text-white shadow-md transition-all flex items-center
+                ${
+                  isLoading || !selectedCompany
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                }`}
+            >
+              {isLoading ? (
+                <>
+                  <ArrowPathIcon className="animate-spin h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  Next <span className="ml-1 hidden sm:inline">→</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -204,25 +204,33 @@ const Quotes = () => {
                         onClick={() => handleOpen(quote)}
                       >
                         <td
-                          className="px-6 py-4 text-sm font-medium text-gray-900"
-                          style={{
-                            maxWidth: "300px",
-                            maxHeight: "40px", 
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 1,
-                            WebkitBoxOrient: "vertical",
-                            whiteSpace: "normal",
-                          }}
-                          title={quote.Description.replace(/<[^>]+>/g, "")}
-                        >
-                          <span
-                            dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(quote.Description),
-                            }}
-                          />
-                        </td>
+  className="px-6 py-4 text-sm font-medium text-gray-900"
+  style={{
+    maxWidth: "300px",
+    maxHeight: "30px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "-webkit-box",
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: "vertical",
+    whiteSpace: "normal",
+  }}
+  title={
+    quote.Description
+      ? quote.Description.replace(/<[^>]+>/g, "")
+      : "-"
+  }
+>
+  {quote.Description ? (
+    <span
+      dangerouslySetInnerHTML={{
+        __html: DOMPurify.sanitize(quote.Description),
+      }}
+    />
+  ) : (
+    "-"
+  )}
+</td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {quote.Total?.Tax}
