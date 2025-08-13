@@ -1,4 +1,4 @@
-// src/redux/store.js
+
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
@@ -6,6 +6,7 @@ import storage from "redux-persist/lib/storage";
 // Import your slices
 import prebuildReducer from "./slices/PrebuildSlice";
 import catalogReducer from "./slices/CatalogSlice"; 
+import quotesReducer from "./slices/QuotesSlice"
 
 const persistConfig = {
   key: "root",
@@ -14,7 +15,8 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   prebuild: prebuildReducer,
-  catalog: catalogReducer, // <-- added new reducer
+  catalog: catalogReducer,
+  quotes: quotesReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

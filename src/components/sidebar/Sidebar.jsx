@@ -5,7 +5,7 @@ import { XMarkIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { setCatalogs } from "../../store/slices/CatalogSlice";
-import companyLogo from "../../assets/simproLogo1.png";
+import companyLogo from "../../assets/simproMonoBlackLogo.png";
 import { useNavigate } from "react-router-dom";
 
 function Sidebar() {
@@ -73,12 +73,12 @@ function Sidebar() {
   };
 
   const menuItems = [
+    { name: "Prebuilds", path: "/companies/prebuilds" },
     {
       name: "Catalogs",
       path: "/companies/catalogs",
       action: () => handleCatalog(companyID, page),
     },
-    { name: "Prebuilds", path: "/companies/prebuilds" },
     { name: "Quotes", path: "/companies/quotes" },
     { name: "Jobs", path: "/companies/jobs" },
     { name: "Suppliers", path: "/companies/suppliers" },
@@ -141,7 +141,7 @@ function Sidebar() {
               <div className="flex flex-col py-2 overflow-y-auto">
                 <ol className="flex flex-col space-y-1">
                   <button
-                    className="w-[140px] h-[100px] m-auto mt-10 cursor-pointer"
+                    className="w-[140px] h-[70px] ml-7 mb-4 cursor-pointer"
                     onClick={() => navigate("/")}
                   >
                     <img src={companyLogo} alt="Company Logo" />

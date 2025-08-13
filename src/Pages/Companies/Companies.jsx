@@ -129,7 +129,7 @@ export default function Companies() {
       Loading...
     </>
   ) : (
-    "Get Prebuilds →"
+    "Next →"
   )}
 </button>
         </div>

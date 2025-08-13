@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "../../components/sidebar/Sidebar";
-import verticalLogo from "../../assets/simproVerticallogo.png";
+import verticalLogo from "../../assets/simproSilverHorizantalLogo.png";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -9,6 +9,7 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useSelector } from "react-redux";
 
 function Catalogs() {
+
   const catalogItems = useSelector((state) => state.catalog.catalogs);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDateRange, setShowDateRange] = useState(false);
@@ -29,6 +30,9 @@ function Catalogs() {
       setShowDateRange(false);
     }
   };
+
+  
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -53,7 +57,7 @@ const currentItems = catalogItems.filter((item) =>
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-lg font-semibold text-gray-800">Catalogs</h1>
+          <h1 className="text-2xl font-semibold text-gray-800">Catalogs</h1>
           <img src={verticalLogo} alt="Company Logo" className="h-10 w-auto" />
         </header>
 
