@@ -97,8 +97,10 @@ const Quotes = () => {
   }, []);
 
   // Filter items based on search term
-  const currentItems = quotes.filter((item) =>
-    item.Description.toLowerCase().includes(searchTerm.toLowerCase())
+  const currentItems = quotes.filter(
+    (item) =>
+      item.ID.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.Description.toLowerCase().includes(searchTerm.toLowerCase())
   );
   return (
     <div className="min-h-screen  bg-gray-50 text-gray-800 font-sans flex">
@@ -186,6 +188,9 @@ const Quotes = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Description
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -203,34 +208,42 @@ const Quotes = () => {
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleOpen(quote)}
                       >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {quote.ID}
+                        </td>
                         <td
-  className="px-6 py-4 text-sm font-medium text-gray-900"
-  style={{
-    maxWidth: "300px",
-    maxHeight: "30px",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    display: "-webkit-box",
-    WebkitLineClamp: 1,
-    WebkitBoxOrient: "vertical",
-    whiteSpace: "normal",
-  }}
-  title={
-    quote.Description
-      ? quote.Description.replace(/<[^>]+>/g, "")
-      : "-"
-  }
->
-  {quote.Description ? (
-    <span
-      dangerouslySetInnerHTML={{
-        __html: DOMPurify.sanitize(quote.Description),
-      }}
-    />
-  ) : (
-    "-"
-  )}
-</td>
+                          className="px-6 py-4 text-lg font-medium text-gray-900"
+                          style={{
+                            maxWidth: "300px",
+                            maxHeight: "40px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: "vertical",
+                            whiteSpace: "normal",
+                            fontSize: "14px",
+                            lineHeight: "1.5",
+                          }}
+                          title={
+                            quote.Description
+                              ? DOMPurify.sanitize(quote.Description).replace(
+                                  /<[^>]+>/g,
+                                  ""
+                                )
+                              : "-"
+                          }
+                        >
+                          {quote.Description ? (
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(quote.Description),
+                              }}
+                            />
+                          ) : (
+                            "-"
+                          )}
+                        </td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {quote.Total?.Tax}
