@@ -33,3 +33,4 @@ const prebuildSlice = createSlice({
 
 export const { setPrebuildData, setPrebuildItem, clearPrebuildItem, clearPrebuildData } = prebuildSlice.actions;
 export default prebuildSlice.reducer;
+export const selectCompanyId = (state) => state.prebuild.companyId;

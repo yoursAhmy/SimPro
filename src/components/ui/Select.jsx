@@ -5,6 +5,7 @@ export default function Select({
   onValueChange,
   placeholder,
   options = [],
+  className = "",
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,7 +22,6 @@ export default function Select({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Normalizing options so both formats are supported
   const normalizedOptions = options.map((opt) => ({
     label: opt?.label || opt?.Name || "",
     value: opt?.value || opt?.ID || "",
@@ -34,13 +34,13 @@ export default function Select({
   const selectedOption = normalizedOptions.find((opt) => opt.value === value);
 
   return (
-    <div className="relative inline-block w-[280px]" ref={ref}>
+    <div className={`relative w-full sm:w-auto min-w-[200px] ${className}`} ref={ref}>
       {/* Selected Button */}
       <button
         type="button"
-        className="w-full h-[52px] px-4 text-left bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 truncate"
+        className="w-full h-[50px] px-5 text-left bg-white border border-gray-200 rounded shadow-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 truncate transition-all"
         onClick={() => setIsOpen(!isOpen)}
-        title={selectedOption ? selectedOption.label : ""} // tooltip for selected
+        title={selectedOption ? selectedOption.label : ""}
       >
         <span className="truncate block">
           {selectedOption ? selectedOption.label : placeholder || "Select..."}
@@ -48,26 +48,31 @@ export default function Select({
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full rounded-md bg-white border border-gray-300 shadow-lg overflow-hidden">
-          {/* Search input */}
-          <input
-            type="text"
-            className="w-full h-[44px] px-3 border-b border-gray-300 focus:outline-none"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            autoFocus
-          />
+        <div className="absolute z-10 mt-1 w-full rounded shadow-lg bg-white border border-gray-200 overflow-hidden">
+          {/* Search input - matches the search bar styling */}
+          <div className="px-2 py-2 border-b border-gray-200">
+            <input
+              type="text"
+              className="w-full h-[50px] px-5 text-lg border border-gray-200 rounded shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+          
           {/* Filtered list */}
           <ul className="max-h-60 overflow-y-auto">
             {filteredOptions.length === 0 ? (
-              <li className="px-4 py-2 text-gray-500">No results found</li>
+              <li className="h-[50px] px-5 flex items-center text-gray-500 text-lg">
+                No results found
+              </li>
             ) : (
               filteredOptions.map((opt) => (
                 <li
                   key={opt.value}
-                  title={opt.label} // tooltip for each option
-                  className={`cursor-pointer h-[44px] flex items-center px-4 hover:bg-blue-100 ${
+                  title={opt.label}
+                  className={`cursor-pointer h-[50px] px-5 flex items-center text-lg hover:bg-blue-100 ${
                     opt.value === value ? "bg-blue-200 font-semibold" : ""
                   }`}
                   onClick={() => {

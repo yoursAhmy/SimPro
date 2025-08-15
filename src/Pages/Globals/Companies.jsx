@@ -1,25 +1,26 @@
 import { useEffect, useState } from "react";
 import companylogo from "../../assets/companyLogo.png";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setPrebuildData, clearPrebuildItem } from "../../store/slices/PrebuildSlice";
-import { useSelector } from "react-redux";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { clearCatalogs } from "../../store/slices/CatalogSlice";
+import { FiLoader } from "react-icons/fi";
+import { motion } from "framer-motion";
 
 export default function Companies() {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  
   const companyId = useSelector((state) => state.prebuild.companyId);
-
   const BASE_URL = import.meta.env.VITE_API_URL;
   
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
 
-  // Clear company data when component mounts or route changes
+  // Clear on mount or route change
   useEffect(() => {
     dispatch(clearPrebuildItem());
     dispatch(clearCatalogs());
@@ -41,6 +42,8 @@ export default function Companies() {
         }
       } catch (err) {
         console.error("Error fetching companies", err);
+      } finally {
+        setIsPageLoading(false);
       }
     };
 
@@ -54,12 +57,10 @@ export default function Companies() {
     }
 
     setIsLoading(true);
-
     try {
       const response = await fetch(
         `${BASE_URL}/prebuilds/allprebuilds?companyID=${selectedCompany}`
       );
-      
       if (response.ok) {
         const data = await response.json();
         dispatch(
@@ -80,8 +81,23 @@ export default function Companies() {
     }
   };
 
+  // If page is still fetching companies
+  if (isPageLoading) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-gray-900 to-gray-800">
+        <FiLoader className="animate-spin text-white text-4xl mb-3" />
+        <p className="text-white text-lg">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex  justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 sm:p-6 ">
+    <motion.div
+      className="min-h-screen flex justify-center  from-gray-900 to-gray-800 p-4 sm:p-6"
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <div className="w-full max-w-2xl mt-20 h-[300px] bg-white rounded-xl shadow-2xl overflow-hidden mx-4">
         <div className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
@@ -96,7 +112,10 @@ export default function Companies() {
           </div>
 
           <div className="mb-6 sm:mb-8">
-            <label htmlFor="company-select" className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="company-select"
+              className="block text-sm sm:text-base font-medium text-gray-700 mb-2"
+            >
               Available Companies
             </label>
             <select
@@ -126,7 +145,7 @@ export default function Companies() {
             >
               {isLoading ? (
                 <>
-                  <ArrowPathIcon className="animate-spin h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <FiLoader className="animate-spin mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Loading...
                 </>
               ) : (
@@ -138,6 +157,6 @@ export default function Companies() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

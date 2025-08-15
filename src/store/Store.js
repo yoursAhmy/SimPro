@@ -7,6 +7,7 @@ import storage from "redux-persist/lib/storage";
 import prebuildReducer from "./slices/PrebuildSlice";
 import catalogReducer from "./slices/CatalogSlice"; 
 import quotesReducer from "./slices/QuotesSlice"
+import supplierInvoiceReducer from "./slices/supplierInvoiceSlice"
 
 const persistConfig = {
   key: "root",
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   prebuild: prebuildReducer,
   catalog: catalogReducer,
   quotes: quotesReducer,
+  supplierInvoice: supplierInvoiceReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

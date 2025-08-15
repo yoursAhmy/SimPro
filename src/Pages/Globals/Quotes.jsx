@@ -4,54 +4,32 @@ import verticalLogo from "../../assets/simproSilverHorizantalLogo.png";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import { subDays, format } from "date-fns";
+import { format, subYears } from "date-fns";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useSelector, useDispatch } from "react-redux";
 import { setQuotes } from "../../store/slices/QuotesSlice";
 import DOMPurify from "dompurify";
-import { Modal, Box, Typography, Fade, Backdrop } from "@mui/material";
+import { motion } from "framer-motion";
+import { FiLoader } from "react-icons/fi";
 
 const Quotes = () => {
   const companyID = useSelector((state) => state.prebuild?.companyId);
   const quotes = useSelector((state) => state.quotes.quotes);
-
   const BASE_URL = import.meta.env.VITE_API_URL;
   const dispatch = useDispatch();
 
-  const [open, setOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
-
-  const handleOpen = (quote) => {
-    setSelectedQuote(quote);
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedQuote(null);
-  };
-
-  const modalStyle = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "90%",
-    maxWidth: 700,
-    maxHeight: "80vh",
-    bgcolor: "background.paper",
-    boxShadow: 3,
-    p: 6,
-    borderRadius: 4,
-    overflowY: "auto",
-  };
-
   const [searchTerm, setSearchTerm] = useState("");
   const [showDateRange, setShowDateRange] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const today = format(new Date(), "yyyy-MM-dd");
+  const twoYearsAgo = format(subYears(new Date(), 2), "yyyy-MM-dd");
+
   const [dateRange, setDateRange] = useState([
     {
-      startDate: subDays(new Date(), 7),
-      endDate: new Date(),
+      startDate: new Date(twoYearsAgo),
+      endDate: new Date(today),
       key: "selection",
     },
   ]);
@@ -67,7 +45,15 @@ const Quotes = () => {
   };
 
   useEffect(() => {
-    fetch(`${BASE_URL}/quotes/allquotes?companyID=${companyID}`)
+    if (companyID === null) return;
+
+    const start = format(dateRange[0].startDate, "yyyy-MM-dd");
+    const end = format(dateRange[0].endDate, "yyyy-MM-dd");
+
+    setLoading(true);
+    fetch(
+      `${BASE_URL}/quotes/allquotes?companyID=${companyID}&startDate=${start}&endDate=${end}`
+    )
       .then((res) => {
         if (res.ok) {
           return res.json();
@@ -75,13 +61,15 @@ const Quotes = () => {
         throw new Error("Failed to fetch catalogs");
       })
       .then((data) => {
-        console.log("Quotes data:", data);
         dispatch(setQuotes(data.quotes));
       })
       .catch((err) => {
         console.error("Error while fetching catalogs", err);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-  }, [BASE_URL, companyID]);
+  }, [BASE_URL, companyID, dateRange]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -96,19 +84,27 @@ const Quotes = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filter items based on search term
+  // Filter items
   const currentItems = quotes.filter(
     (item) =>
       item.ID.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.Description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
   return (
-    <div className="min-h-screen  bg-gray-50 text-gray-800 font-sans flex">
+    <motion.div
+      className="min-h-screen bg-gray-50 text-gray-800 font-sans flex"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <Sidebar />
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-2xl font-semibold text-gray-800">Qoutes</h1>
+          <h1 className="text-2xl ml-10 lg:ml-0 font-semibold text-gray-800">
+            Quotes
+          </h1>
           <img src={verticalLogo} alt="Company Logo" className="h-10 w-auto" />
         </header>
 
@@ -116,44 +112,31 @@ const Quotes = () => {
         <div className="sticky top-0 z-10 bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 max-w-7xl mx-auto">
             {/* Search Bar */}
-            <div className="relative col-span-1 xs:col-span-2 md:col-span-1">
+            <div className="w-full sm:w-auto min-w-[200px] relative">
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 type="text"
-                placeholder="Search catalogs..."
-                className="w-full px-4 py-2 sm:py-3 bg-white text-gray-800 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-gray-50 shadow-sm text-sm sm:text-base"
+                placeholder="Search quotes..."
+                className="shadow-lg border border-gray-200 rounded px-5 h-[50px] py-4 text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all w-full"
               />
-              <svg
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
             </div>
 
             {/* Date Range Picker */}
             <div
-              className="col-span-1 xs:col-span-2 md:col-span-1 relative"
+              className="w-full sm:w-auto min-w-[200px] relative"
               ref={dateRangeRef}
             >
               <div
-                className="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition"
+                className="flex items-center h-[50px] px-5 py-4 bg-white border border-gray-200 rounded shadow-lg cursor-pointer hover:bg-gray-50 transition-all duration-200"
                 onClick={() => setShowDateRange(!showDateRange)}
               >
                 <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-700">
+                <div className="truncate">
+                  <p className="text-lg font-semibold text-gray-700 truncate">
                     Date Range
-                  </h2>
-                  <p className="text-xs text-gray-600">
+                  </p>
+                  <p className="text-sm text-gray-600 truncate">
                     {format(dateRange[0].startDate, "MMM dd, yyyy")} -{" "}
                     {format(dateRange[0].endDate, "MMM dd, yyyy")}
                   </p>
@@ -175,11 +158,16 @@ const Quotes = () => {
             </div>
           </div>
         </div>
-        {/* Table */}
+
+        {/* Table or Loader */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
-              {currentItems.length === 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <FiLoader className="animate-spin text-4xl text-blue-500" />
+                </div>
+              ) : currentItems.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500">No Quotes found.</p>
                 </div>
@@ -206,7 +194,7 @@ const Quotes = () => {
                       <tr
                         key={quote.ID}
                         className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => handleOpen(quote)}
+                        onClick={() => setSelectedQuote(quote)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {quote.ID}
@@ -257,68 +245,52 @@ const Quotes = () => {
                   </tbody>
                 </table>
               )}
-              <Modal
-                open={open}
-                onClose={handleClose}
-                closeAfterTransition
-                BackdropComponent={Backdrop}
-                BackdropProps={{ timeout: 500 }}
-              >
-                <Fade in={open}>
-                  <Box sx={modalStyle}>
-                    {selectedQuote && (
-                      <>
-                        <Typography
-                          variant="h5"
-                          component="h2"
-                          sx={{ fontWeight: "bold", mb: 2 }}
-                        >
-                          Quote Details
-                        </Typography>
 
-                        <Typography sx={{ mt: 1 }}>
-                          <strong>ID:</strong> {selectedQuote.ID}
-                        </Typography>
+              {/* Custom Popup */}
+              {selectedQuote && (
+                <div className="fixed mt-40 inset-0 bg-transparent flex items-center justify-center z-50">
+                  <div className="bg-white rounded-xl shadow-xl w-96 max-h-[90vh] p-6 relative overflow-hidden">
+                    {/* Close Button */}
+                    <button
+                      className="absolute top-3 right-3 cursor-pointer text-gray-500 hover:text-gray-700 transition"
+                      onClick={() => setSelectedQuote(null)}
+                    >
+                      ✖
+                    </button>
 
-                        <Typography sx={{ mt: 1 }}>
-                          <strong>Description:</strong>
-                          <div
-                            style={{ marginTop: "0.5rem" }}
-                            dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(
-                                selectedQuote.Description
-                              ),
-                            }}
-                          />
-                        </Typography>
+                    {/* Title */}
+                    <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">
+                      Quote Details
+                    </h2>
 
-                        <Typography sx={{ mt: 1 }}>
-                          <strong>Is Closed:</strong>{" "}
-                          {selectedQuote.IsClosed ? "Yes" : "No"}
-                        </Typography>
+                    {/* Info */}
+                    <div className="space-y-2 text-sm text-gray-700">
+                      <p><strong>ID:</strong> {selectedQuote.ID}</p>
+                      <p><strong>Is Closed:</strong> {selectedQuote.IsClosed ? "Yes" : "No"}</p>
+                      <p><strong>ExTax:</strong> {selectedQuote?.Total?.ExTax ?? "N/A"}</p>
+                      <p><strong>IncTax:</strong> {selectedQuote?.Total?.IncTax ?? "N/A"}</p>
+                      <p><strong>Tax:</strong> {selectedQuote?.Total?.Tax ?? "N/A"}</p>
+                    </div>
 
-                        <Typography sx={{ mt: 1 }}>
-                          <strong>Ex Tax:</strong> {selectedQuote.Total?.ExTax}
-                        </Typography>
+                    {/* Description */}
+                    <div className="mt-4">
+                      <strong className="block text-gray-800 mb-2">Description:</strong>
+                      <div
+                        className="p-3 border rounded-lg bg-gray-50 max-h-40 overflow-y-auto text-sm leading-relaxed custom-scrollbar"
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(selectedQuote.Description),
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                        <Typography sx={{ mt: 1 }}>
-                          <strong>Tax:</strong> {selectedQuote.Total?.Tax}
-                        </Typography>
-
-                        <Typography sx={{ mt: 1 }}>
-                          <strong>Inc Tax:</strong>{" "}
-                          {selectedQuote.Total?.IncTax}
-                        </Typography>
-                      </>
-                    )}
-                  </Box>
-                </Fade>
-              </Modal>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

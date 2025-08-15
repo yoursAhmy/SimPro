@@ -7,12 +7,15 @@ import "react-date-range/dist/theme/default.css";
 import { subDays, format } from "date-fns";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
+import { FiLoader } from "react-icons/fi";
 
 function Catalogs() {
-
   const catalogItems = useSelector((state) => state.catalog.catalogs);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [showDateRange, setShowDateRange] = useState(false);
+  const [loading, setLoading] = useState(true); // loader state
   const [dateRange, setDateRange] = useState([
     {
       startDate: subDays(new Date(), 7),
@@ -31,15 +34,15 @@ function Catalogs() {
     }
   };
 
-  
-
+  // Simulate data loading delay
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        dateRangeRef.current &&
-        !dateRangeRef.current.contains(event.target)
-      ) {
+      if (dateRangeRef.current && !dateRangeRef.current.contains(event.target)) {
         setShowDateRange(false);
       }
     };
@@ -48,16 +51,24 @@ function Catalogs() {
   }, []);
 
   // Filter items based on search term
-const currentItems = catalogItems.filter((item) =>
-  item.Name.toLowerCase().includes(searchTerm.toLowerCase())
-);
+  const currentItems = catalogItems.filter((item) =>
+    item.Name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen  bg-gray-50 text-gray-800 font-sans flex">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-gray-50 text-gray-800 font-sans flex"
+    >
       <Sidebar />
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-2xl font-semibold text-gray-800">Catalogs</h1>
+          <h1 className="text-2xl ml-10 lg:ml-0 font-semibold text-gray-800">
+            Catalogs
+          </h1>
           <img src={verticalLogo} alt="Company Logo" className="h-10 w-auto" />
         </header>
 
@@ -65,44 +76,31 @@ const currentItems = catalogItems.filter((item) =>
         <div className="sticky top-0 z-10 bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 max-w-7xl mx-auto">
             {/* Search Bar */}
-            <div className="relative col-span-1 xs:col-span-2 md:col-span-1">
+            <div className="w-full sm:w-auto min-w-[200px] relative">
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 type="text"
-                placeholder="Search catalogs..."
-                className="w-full px-4 py-2 sm:py-3 bg-white text-gray-800 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:bg-gray-50 shadow-sm text-sm sm:text-base"
+                placeholder="Search Catalogs Items..."
+                className="shadow-lg border border-gray-200 rounded px-5 h-[50px] py-4 text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all w-full"
               />
-              <svg
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
             </div>
 
             {/* Date Range Picker */}
             <div
-              className="col-span-1 xs:col-span-2 md:col-span-1 relative"
+              className="w-full sm:w-auto min-w-[200px] relative"
               ref={dateRangeRef}
             >
               <div
-                className="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition"
+                className="flex items-center h-[50px] px-5 py-4 bg-white border border-gray-200 rounded shadow-lg cursor-pointer hover:bg-gray-50 transition-all duration-200"
                 onClick={() => setShowDateRange(!showDateRange)}
               >
                 <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-700">
+                <div className="truncate">
+                  <p className="text-lg font-semibold text-gray-700 truncate">
                     Date Range
-                  </h2>
-                  <p className="text-xs text-gray-600">
+                  </p>
+                  <p className="text-sm text-gray-600 truncate">
                     {format(dateRange[0].startDate, "MMM dd, yyyy")} -{" "}
                     {format(dateRange[0].endDate, "MMM dd, yyyy")}
                   </p>
@@ -124,11 +122,16 @@ const currentItems = catalogItems.filter((item) =>
             </div>
           </div>
         </div>
+
         {/* Table */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
-              {currentItems.length === 0 ? (
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <FiLoader className="h-8 w-8 text-blue-500 animate-spin" />
+                </div>
+              ) : currentItems.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500">No catalog items found.</p>
                 </div>
@@ -171,7 +174,7 @@ const currentItems = catalogItems.filter((item) =>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
