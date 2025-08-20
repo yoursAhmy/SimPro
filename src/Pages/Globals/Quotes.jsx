@@ -101,15 +101,16 @@ const Quotes = () => {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-2xl ml-10 lg:ml-0 font-semibold text-gray-800">
+        <header className="bg-white sticky top-0 z-10 shadow-sm h-16 flex items-center justify-between px-6 border-b">
+          <h1 className="text-2xl ml-12 lg:ml-0 font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             Quotes
           </h1>
           <img src={verticalLogo} alt="Company Logo" className="h-10 w-auto" />
         </header>
 
         {/* Filters */}
-        <div className="sticky top-0 z-10 bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
+        <div className=" bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 max-w-7xl mx-auto">
             {/* Search Bar */}
             <div className="w-full sm:w-auto min-w-[200px] relative">
@@ -164,8 +165,9 @@ const Quotes = () => {
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               {loading ? (
-                <div className="flex items-center justify-center py-20">
+                <div className="flex flex-col items-center text-[var(--color-primary)] justify-center py-20">
                   <FiLoader className="animate-spin text-4xl text-blue-500" />
+                  loading Quotes...
                 </div>
               ) : currentItems.length === 0 ? (
                 <div className="text-center py-8">
@@ -179,13 +181,13 @@ const Quotes = () => {
                         ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        Descriptiond
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         TAX
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        IsClosed
+                        Open
                       </th>
                     </tr>
                   </thead>
@@ -196,22 +198,21 @@ const Quotes = () => {
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => setSelectedQuote(quote)}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-2 py-1 whitespace-nowrap text-sm text-gray-500">
+                          {" "}
+                          {/* Reduced padding */}
                           {quote.ID}
                         </td>
                         <td
-                          className="px-6 py-4 text-lg font-medium text-gray-900"
+                          className="px-2 py-1 text-sm font-medium text-gray-900" // Reduced padding + smaller font
                           style={{
-                            maxWidth: "300px",
-                            maxHeight: "40px",
+                            maxWidth: "100px",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             display: "-webkit-box",
                             WebkitLineClamp: 1,
                             WebkitBoxOrient: "vertical",
-                            whiteSpace: "normal",
-                            fontSize: "14px",
-                            lineHeight: "1.5",
+                            lineHeight: "1.2",
                           }}
                           title={
                             quote.Description
@@ -219,7 +220,7 @@ const Quotes = () => {
                                   /<[^>]+>/g,
                                   ""
                                 )
-                              : "-"
+                              : "--"
                           }
                         >
                           {quote.Description ? (
@@ -229,15 +230,16 @@ const Quotes = () => {
                               }}
                             />
                           ) : (
-                            "-"
+                            "--"
                           )}
                         </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-2 py-1 whitespace-nowrap md:px-6 md:py-3  text-sm text-gray-500">
+                          {" "}
+                          {/* Reduced padding */}
                           {quote.Total?.Tax}
                         </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-2 py-1 whitespace-nowrap text-center text-sm text-gray-500 w-16 ">
+                          {" "}
                           {quote.IsClosed ? "Yes" : "No"}
                         </td>
                       </tr>
@@ -248,9 +250,8 @@ const Quotes = () => {
 
               {/* Custom Popup */}
               {selectedQuote && (
-                <div className="fixed mt-40 inset-0 bg-transparent flex items-center justify-center z-50">
-                  <div className="bg-white rounded-xl shadow-xl w-96 max-h-[90vh] p-6 relative overflow-hidden">
-                    {/* Close Button */}
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-xl shadow-xl w-full max-w-[95vw] md:w-96 max-h-[90vh] p-6 relative overflow-hidden">
                     <button
                       className="absolute top-3 right-3 cursor-pointer text-gray-500 hover:text-gray-700 transition"
                       onClick={() => setSelectedQuote(null)}
@@ -258,34 +259,49 @@ const Quotes = () => {
                       ✖
                     </button>
 
-                    {/* Title */}
-                    <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">
+                    <h2 className="text-lg md:text-xl font-bold mb-4 text-gray-800 border-b pb-2">
                       Quote Details
                     </h2>
 
-                    {/* Info */}
-                    <div className="space-y-2 text-sm text-gray-700">
-                      <p><strong>ID:</strong> {selectedQuote.ID}</p>
-                      <p><strong>Is Closed:</strong> {selectedQuote.IsClosed ? "Yes" : "No"}</p>
-                      <p><strong>ExTax:</strong> {selectedQuote?.Total?.ExTax ?? "N/A"}</p>
-                      <p><strong>IncTax:</strong> {selectedQuote?.Total?.IncTax ?? "N/A"}</p>
-                      <p><strong>Tax:</strong> {selectedQuote?.Total?.Tax ?? "N/A"}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
+                      <p>
+                        <strong>ID:</strong> {selectedQuote.ID}
+                      </p>
+                      <p>
+                        <strong>Is Closed:</strong>{" "}
+                        {selectedQuote.IsClosed ? "Yes" : "No"}
+                      </p>
+                      <p>
+                        <strong>ExTax:</strong>{" "}
+                        {selectedQuote?.Total?.ExTax ?? "N/A"}
+                      </p>
+                      <p>
+                        <strong>IncTax:</strong>{" "}
+                        {selectedQuote?.Total?.IncTax ?? "N/A"}
+                      </p>
+                      <p>
+                        <strong>Tax:</strong>{" "}
+                        {selectedQuote?.Total?.Tax ?? "N/A"}
+                      </p>
                     </div>
 
-                    {/* Description */}
+                    {/* Description - Scrollable */}
                     <div className="mt-4">
-                      <strong className="block text-gray-800 mb-2">Description:</strong>
+                      <strong className="block text-gray-800 mb-2">
+                        Description:
+                      </strong>
                       <div
-                        className="p-3 border rounded-lg bg-gray-50 max-h-40 overflow-y-auto text-sm leading-relaxed custom-scrollbar"
+                        className="p-3 border rounded-lg bg-gray-50 max-h-[30vh] overflow-y-auto text-sm leading-relaxed"
                         dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(selectedQuote.Description),
+                          __html: DOMPurify.sanitize(
+                            selectedQuote.Description || "No description"
+                          ),
                         }}
                       />
                     </div>
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         </div>

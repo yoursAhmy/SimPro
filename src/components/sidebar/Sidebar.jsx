@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { XMarkIcon, Bars3Icon } from "@heroicons/react/24/outline";
 import { useSelector, useDispatch } from "react-redux";
 import { setCatalogs } from "../../store/slices/CatalogSlice";
-import companyLogo from "../../assets/simproMonoBlackLogo.png";
+import companyLogo from "../../assets/simproBluehorizontalLogo.png";
 
 function Sidebar() {
   const companyID = useSelector((state) => state.prebuild?.companyId);
@@ -40,7 +40,7 @@ function Sidebar() {
       return;
     }
     fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`)
-      .then((res) => res.ok ? res.json() : Promise.reject())
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => dispatch(setCatalogs(data.catalogs)))
       .catch(console.error);
   };
@@ -53,10 +53,9 @@ function Sidebar() {
     closed: { x: "-100%" },
   };
 
-  // Check if current path is a supplier sub-item
   const isSupplierSubItemActive = () => {
-    return supplierSubItems.some(subItem => 
-      location.pathname.includes(subItem.path.split('/').pop())
+    return supplierSubItems.some((subItem) =>
+      location.pathname.includes(subItem.path.split("/").pop())
     );
   };
 
@@ -81,13 +80,15 @@ function Sidebar() {
     <>
       {/* Hamburger Button - Only mobile */}
       {isMobile && !isOpen && (
-        <button
+        <motion.button
           onClick={toggleSidebar}
           className="fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-lg lg:hidden"
           aria-label="Toggle menu"
+          whileHover={{ scale: 1.05, backgroundColor: "#f3f4f6" }}
+          whileTap={{ scale: 0.95 }}
         >
-          <Bars3Icon className="h-5 w-5 text-gray-700" />
-        </button>
+          <Bars3Icon className="h-5 w-5 text-[var(--color-primary)]" />
+        </motion.button>
       )}
 
       {/* Sidebar */}
@@ -104,31 +105,30 @@ function Sidebar() {
             }`}
           >
             <div className="flex flex-col h-full">
-              {/* Close Button */}
-              {isMobile && (
-                <button
-                  onClick={closeSidebar}
-                  className="self-end p-4 text-gray-500 hover:text-gray-700 lg:hidden"
-                  aria-label="Close menu"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              )}
-
-              {/* Logo */}
-              <div className="px-6 py-4">
+              {/* Header with Logo + Close Button */}
+              <div className="flex items-center justify-between px-6 py-4">
                 <button
                   onClick={() => navigate("/")}
                   className="cursor-pointer"
                 >
-                  <img 
-                    src={companyLogo} 
-                    alt="Company Logo" 
-                    className={`${
-                      isMobile ? "h-10" : "h-12"
-                    } w-auto`}
+                  <img
+                    src={companyLogo}
+                    alt="Company Logo"
+                    className={`${isMobile ? "h-10" : "h-12"} w-auto`}
                   />
                 </button>
+
+                {/* Close Button (only mobile) */}
+                {isMobile && (
+                  <motion.button
+                    onClick={closeSidebar}
+                    className="p-2 text-gray-500 hover:text-gray-700 lg:hidden"
+                    aria-label="Close menu"
+                    whileHover={{ scale: 1.1, backgroundColor: "#f3f4f6" }}
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </motion.button>
+                )}
               </div>
 
               {/* Menu Items */}
@@ -136,63 +136,80 @@ function Sidebar() {
                 <ul className="space-y-1">
                   {menuItems.map((item) => (
                     <li key={item.name}>
-                      <div 
-                        onMouseEnter={() => item.name === "Suppliers" && setHoveredSupplier(true)}
-                        onMouseLeave={() => item.name === "Suppliers" && setHoveredSupplier(false)}
+                      <div
+                        onMouseEnter={() =>
+                          item.name === "Suppliers" && setHoveredSupplier(true)
+                        }
+                        onMouseLeave={() =>
+                          item.name === "Suppliers" && setHoveredSupplier(false)
+                        }
                       >
                         {item.path ? (
-                          <NavLink
-                            to={item.path}
-                            onClick={() => {
-                              if (item.action) item.action();
-                              closeSidebar();
-                            }}
-                            className={({ isActive }) =>
-                              `block px-4 py-3 ${
-                                isMobile ? "text-sm" : "text-base"
-                              } font-medium rounded-md mx-2 transition-colors duration-200 ${
-                                isActive
-                                  ? "bg-blue-50 text-blue-600 border-l-4 border-blue-500"
-                                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                              }`
-                            }
+                          <motion.div
+                            whileHover={{ x: 5 }}
+                            transition={{ type: "spring", stiffness: 300 }}
                           >
-                            {item.name}
-                          </NavLink>
+                            <NavLink
+                              to={item.path}
+                              onClick={() => {
+                                if (item.action) item.action();
+                                closeSidebar();
+                              }}
+                              className={({ isActive }) =>
+                                `block px-4 py-3 ${
+                                  isMobile ? "text-sm" : "text-base"
+                                } font-medium rounded-md mx-2 transition-colors duration-200 ${
+                                  isActive
+                                    ? "bg-blue-50 text-[var(--color-primary)] border-l-4 border-[var(--color-primary)]"
+                                    : "text-gray-700 hover:bg-gray-100 hover:text-[var(--color-primary)]"
+                                }`
+                              }
+                            >
+                              {item.name}
+                            </NavLink>
+                          </motion.div>
                         ) : (
-                          <div
+                          <motion.div
+                            whileHover={{ x: 5 }}
+                            transition={{ type: "spring", stiffness: 300 }}
                             className={`block px-4 py-3 ${
                               isMobile ? "text-sm" : "text-base"
                             } font-medium rounded-md mx-2 transition-colors duration-200 ${
                               isSupplierSubItemActive()
-                                ? "bg-blue-50 text-blue-600 border-l-4 border-blue-500"
-                                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                ? "bg-blue-50 text-[var(--color-primary)] border-l-4 border-[var(--color-primary)]"
+                                : "text-gray-700 hover:bg-gray-100 hover:text-[var(--color-primary)]"
                             }`}
                           >
                             {item.name}
-                          </div>
+                          </motion.div>
                         )}
-                        
+
                         {/* Supplier sub-items */}
-                        {(item.name === "Suppliers" && (hoveredSupplier || isMobile)) && (
+                        {(item.name === "Suppliers" &&
+                          (hoveredSupplier || isMobile)) && (
                           <div className="ml-6 mt-1 space-y-1">
                             {supplierSubItems.map((subItem) => (
-                              <NavLink
+                              <motion.div
                                 key={subItem.name}
-                                to={subItem.path}
-                                onClick={closeSidebar}
-                                className={({ isActive }) =>
-                                  `block px-4 py-2 ${
-                                    isMobile ? "text-xs" : "text-sm"
-                                  } font-medium rounded-md mx-2 transition-colors duration-200 ${
-                                    isActive
-                                      ? "bg-blue-50 text-blue-600 border-l-2 border-blue-500"
-                                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-800"
-                                  }`
-                                }
+                                whileHover={{ x: 5 }}
+                                transition={{ type: "spring", stiffness: 300 }}
                               >
-                                {subItem.name}
-                              </NavLink>
+                                <NavLink
+                                  to={subItem.path}
+                                  onClick={closeSidebar}
+                                  className={({ isActive }) =>
+                                    `block px-4 py-2 ${
+                                      isMobile ? "text-xs" : "text-sm"
+                                    } font-medium rounded-md mx-2 transition-colors duration-200 ${
+                                      isActive
+                                        ? "bg-blue-50 text-[var(--color-primary)] border-l-2 border-[var(--color-primary)]"
+                                        : "text-gray-500 hover:bg-gray-100 hover:text-[var(--color-primary)]"
+                                    }`
+                                  }
+                                >
+                                  {subItem.name}
+                                </NavLink>
+                              </motion.div>
                             ))}
                           </div>
                         )}

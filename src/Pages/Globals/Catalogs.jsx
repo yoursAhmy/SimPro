@@ -42,7 +42,10 @@ function Catalogs() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dateRangeRef.current && !dateRangeRef.current.contains(event.target)) {
+      if (
+        dateRangeRef.current &&
+        !dateRangeRef.current.contains(event.target)
+      ) {
         setShowDateRange(false);
       }
     };
@@ -65,15 +68,16 @@ function Catalogs() {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-2xl ml-10 lg:ml-0 font-semibold text-gray-800">
+        <header className="bg-white sticky top-0 z-10 shadow-sm h-16 flex items-center justify-between px-6 border-b">
+          <h1 className="text-2xl ml-10 lg:ml-0 font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer "
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             Catalogs
           </h1>
           <img src={verticalLogo} alt="Company Logo" className="h-10 w-auto" />
         </header>
 
         {/* Filters */}
-        <div className="sticky top-0 z-10 bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
+        <div className=" bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 max-w-7xl mx-auto">
             {/* Search Bar */}
             <div className="w-full sm:w-auto min-w-[200px] relative">
@@ -128,47 +132,84 @@ function Catalogs() {
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
               {loading ? (
-                <div className="flex justify-center items-center py-12">
-                  <FiLoader className="h-8 w-8 text-blue-500 animate-spin" />
+                <div className="flex flex-col justify-center text-[var(--color-primary)] items-center py-12">
+                  <FiLoader className="h-8 w-8 animate-spin" />
+                 <p> loading Catalogs...</p>
                 </div>
               ) : currentItems.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500">No catalog items found.</p>
                 </div>
               ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Trade Price Inc
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Trade Price
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentItems.map((catalogItem) => (
-                      <tr
-                        key={catalogItem.ID}
-                        className="hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {catalogItem.Name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {catalogItem.TradePriceInc}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {catalogItem.TradePrice}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th
+                          className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-3 text-left 
+                     text-[0.7rem] sm:text-xs font-medium text-gray-500 
+                     uppercase tracking-wider w-[50%]"
+                        >
+                          Name
+                        </th>
+                        <th
+                          className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-3 text-center 
+                     text-[0.7rem] sm:text-xs font-medium text-gray-500 
+                     uppercase tracking-wider w-[25%]"
+                        >
+                          Trade Price Inc
+                        </th>
+                        <th
+                          className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-3 text-center 
+                     text-[0.7rem] sm:text-xs font-medium text-gray-500 
+                     uppercase tracking-wider w-[25%]"
+                        >
+                          Trade Price
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {currentItems.map((catalogItem) => (
+                        <tr
+                          key={catalogItem.ID}
+                          className="hover:bg-gray-50 transition-colors duration-150"
+                        >
+                          {/* Name Column */}
+                          <td
+                            className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 lg:py-4 
+                     text-[0.75rem] sm:text-sm font-medium text-gray-900 
+                     truncate overflow-hidden"
+                          >
+                            {catalogItem.Name}
+                          </td>
+
+                          {/* Trade Price Inc Column */}
+                          <td
+                            className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 lg:py-4 
+                     whitespace-nowrap text-[0.75rem] sm:text-sm 
+                     text-gray-500 text-center"
+                          >
+                            {typeof catalogItem.TradePriceInc === "number"
+                              ? `$${catalogItem.TradePriceInc.toFixed(2)}`
+                              : catalogItem.TradePriceInc ?? "—"}
+                          </td>
+
+                          {/* Trade Price Column */}
+                          <td
+                            className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 lg:py-4 
+                     whitespace-nowrap text-[0.75rem] sm:text-sm 
+                     text-gray-500 text-center"
+                          >
+                            {typeof catalogItem.TradePrice === "number"
+                              ? `$${catalogItem.TradePrice.toFixed(2)}`
+                              : catalogItem.TradePrice ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

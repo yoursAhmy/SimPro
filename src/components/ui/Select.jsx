@@ -64,7 +64,7 @@ export default function Select({
           {/* Filtered list */}
           <ul className="max-h-60 overflow-y-auto">
             {filteredOptions.length === 0 ? (
-              <li className="h-[50px] px-5 flex items-center text-gray-500 text-lg">
+              <li className="h-[50px] px-5 flex items-center  text-gray-500 sm:text-sm md:text-lg">
                 No results found
               </li>
             ) : (

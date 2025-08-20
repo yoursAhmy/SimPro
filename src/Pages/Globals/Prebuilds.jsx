@@ -36,11 +36,20 @@ export default function Prebuilds() {
   ]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
-  const filteredItems = (prebuildItems || []).filter((item) =>
-    (item?.Catalog?.Name || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+const filteredItems = (prebuildItems || []).filter((item) => {
+  const nameMatch = (item?.Catalog?.Name || "")
+    .toLowerCase()
+    .includes(searchTerm.toLowerCase());
+
+  const idMatch = (item?.Catalog?.ID || "")
+    .toString()
+    .toLowerCase()
+    .includes(searchTerm.toLowerCase());
+
+  return nameMatch || idMatch;
+});
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -59,7 +68,10 @@ export default function Prebuilds() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dateRangeRef.current && !dateRangeRef.current.contains(event.target)) {
+      if (
+        dateRangeRef.current &&
+        !dateRangeRef.current.contains(event.target)
+      ) {
         setShowDateRange(false);
       }
     };
@@ -73,8 +85,8 @@ export default function Prebuilds() {
   if (!prebuilds) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
-        <FiLoader className="animate-spin text-blue-500 text-4xl mb-3" />
-        <p className="text-lg md:text-xl text-gray-600 font-semibold">
+        <FiLoader className="animate-spin text-[var(--color-primary)] text-4xl mb-3" />
+        <p className="text-lg md:text-xl text-[var(--color-primary)]  font-semibold">
           Loading prebuilds...
         </p>
       </div>
@@ -91,8 +103,9 @@ export default function Prebuilds() {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-xl ml-10 lg:ml-0 sm:text-2xl font-semibold text-gray-800">
+        <header className=" bg-[var(--color-surface)] sticky top-0 z-10 shadow-sm h-16 flex items-center justify-between px-6 border-b">
+          <h1 className="text-xl ml-10 lg:ml-0 sm:text-2xl font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer "
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             Prebuilds
           </h1>
           <img
@@ -103,7 +116,7 @@ export default function Prebuilds() {
         </header>
 
         {/* Filters */}
-        <div className="sticky top-0 z-10 bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
+        <div className=" bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 max-w-7xl mx-auto">
             {/* Search Bar */}
             <div className="w-full sm:w-auto min-w-[200px] relative">
@@ -146,7 +159,7 @@ export default function Prebuilds() {
                   label: pb?.Name || "Untitled",
                   value: pb?.ID || "",
                 }))}
-                className="w-full h-[50px] text-lg"
+                className="w-full h-[50px] text-xs sm:text-base cursor-pointer " 
               />
             </div>
 
@@ -202,8 +215,8 @@ export default function Prebuilds() {
               <div className="overflow-x-auto">
                 {isLoading ? (
                   <div className="flex flex-col items-center py-8">
-                    <FiLoader className="animate-spin text-blue-500 text-3xl mb-2" />
-                    <p className="text-blue-600">Loading catalog items...</p>
+                    <FiLoader className="animate-spin text-[var(--color-primary)] text-3xl mb-2" />
+                    <p className="text-[var(--color-primary)]">Loading catalog items...</p>
                   </div>
                 ) : !selectedPrebuildId ? (
                   <div className="text-center py-8">
@@ -228,13 +241,16 @@ export default function Prebuilds() {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                            ID
+                          </th>
+                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Name
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Quantity
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-4 md:px-6 py-2  sm:py-3 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Price
                           </th>
                         </tr>
@@ -245,98 +261,54 @@ export default function Prebuilds() {
                             key={item?.Catalog?.ID || idx}
                             className="hover:bg-gray-50"
                           >
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 max-w-[150px] truncate">
+                              {item?.Catalog?.ID || "N/A"}
+                            </td>
+                            <td className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 max-w-[150px] truncate">
                               {item?.Catalog?.Name || "N/A"}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td
+                              className=" sm:px-0 md:px-6 sm:py-0 md:py-4 text-center text-xs sm:text-sm text-gray-500 
+                     w-[50px] sm:w-[70px] md:w-[100px] truncate"
+                            >
                               {item?.Quantity ?? "—"}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-center whitespace-nowrap text-xs sm:text-sm text-gray-500">
                               {item?.Catalog?.TradePrice ?? "—"}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-
                     {/* Pagination */}
                     {filteredItems.length > itemsPerPage && (
                       <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
-                        <div className="flex-1 flex justify-between sm:hidden">
+                        <div className="flex-1 flex justify-between">
                           <button
                             onClick={() =>
                               setCurrentPage((p) => Math.max(p - 1, 1))
                             }
                             disabled={currentPage === 1}
-                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 
+                   text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50
+                   disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Previous
                           </button>
+                          <div className="flex items-center px-4 text-sm text-gray-700">
+                            Page {currentPage} of {totalPages}
+                          </div>
                           <button
                             onClick={() =>
-                              setCurrentPage((p) =>
-                                Math.min(p + 1, totalPages)
-                              )
+                              setCurrentPage((p) => Math.min(p + 1, totalPages))
                             }
                             disabled={currentPage === totalPages}
-                            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 
+                   text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50
+                   disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Next
                           </button>
-                        </div>
-                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm text-gray-700">
-                              Showing{" "}
-                              <span className="font-medium">
-                                {indexOfFirstItem + 1}
-                              </span>{" "}
-                              to{" "}
-                              <span className="font-medium">
-                                {Math.min(
-                                  indexOfLastItem,
-                                  filteredItems.length
-                                )}
-                              </span>{" "}
-                              of{" "}
-                              <span className="font-medium">
-                                {filteredItems.length}
-                              </span>{" "}
-                              results
-                            </p>
-                          </div>
-                          <div>
-                            <nav
-                              className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                              aria-label="Pagination"
-                            >
-                              <button
-                                onClick={() =>
-                                  setCurrentPage((p) => Math.max(p - 1, 1))
-                                }
-                                disabled={currentPage === 1}
-                                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                              >
-                                <span className="sr-only">Previous</span>
-                                &larr;
-                              </button>
-                              <div className="flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                                Page {currentPage} of {totalPages}
-                              </div>
-                              <button
-                                onClick={() =>
-                                  setCurrentPage((p) =>
-                                    Math.min(p + 1, totalPages)
-                                  )
-                                }
-                                disabled={currentPage === totalPages}
-                                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                              >
-                                <span className="sr-only">Next</span>
-                                &rarr;
-                              </button>
-                            </nav>
-                          </div>
                         </div>
                       </div>
                     )}
