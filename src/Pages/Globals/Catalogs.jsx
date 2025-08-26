@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "../../components/sidebar/Sidebar";
 import verticalLogo from "../../assets/simproSilverHorizantalLogo.png";
@@ -29,6 +27,7 @@ function Catalogs() {
   const dispatch = useDispatch();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("ALL"); // New state for status filter
   const [showDateRange, setShowDateRange] = useState(false);
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
@@ -43,7 +42,7 @@ function Catalogs() {
   const [calendarMonths, setCalendarMonths] = useState(2);
   const [isSelectingStartDate, setIsSelectingStartDate] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
+  const [itemsPerPage] = useState(10);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [error, setError] = useState(null);
 
@@ -59,10 +58,10 @@ function Catalogs() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Reset currentPage when searchTerm changes
+  // Reset currentPage when searchTerm or filterStatus changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, filterStatus]);
 
   // Handle click outside to close date range picker
   useEffect(() => {
@@ -147,18 +146,24 @@ function Catalogs() {
   };
 
   // Handle row click and checkbox toggle
-  const handleRowClick = (id) => {
+  const handleRowClick = (id, archived) => {
+    if (archived) return; // Prevent selecting archived items
     setSelectedItemIds((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
     );
   };
 
-  // Filter items based on search term
-  const currentItems = catalogItems.filter(
-    (item) =>
+  // Filter items based on search term and status
+  const currentItems = catalogItems.filter((item) => {
+    const matchesSearch =
       item.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.ID.toString().includes(searchTerm)
-  );
+      item.ID.toString().includes(searchTerm);
+    const matchesStatus =
+      filterStatus === "ALL" ||
+      (filterStatus === "Active" && !item.Archived) ||
+      (filterStatus === "Archived" && item.Archived);
+    return matchesSearch && matchesStatus;
+  });
 
   // Pagination logic
   const totalPages = Math.ceil(currentItems.length / itemsPerPage);
@@ -186,10 +191,11 @@ function Catalogs() {
 
     autoTable(doc, {
       startY: 46,
-      head: [["ID", "Name"]],
+      head: [["ID", "Name", "Status"]],
       body: currentItems.map((item) => [
         String(item.ID || "N/A"),
         String(item.Name || "N/A"),
+        item.Archived ? "Archived" : "Active",
       ]),
       theme: "striped",
       headStyles: { fillColor: [59, 130, 246] },
@@ -207,6 +213,7 @@ function Catalogs() {
     setIsSelectingStartDate(true);
     setCurrentPage(1);
     setSelectedItemIds([]);
+    setFilterStatus("ALL"); // Reset filter
     setError(null);
   };
 
@@ -259,7 +266,7 @@ function Catalogs() {
   // Generate pagination range
   const getPaginationRange = () => {
     const range = [];
-    const maxVisiblePages = 5; // Show up to 5 page numbers including ellipses
+    const maxVisiblePages = 5;
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         range.push(i);
@@ -361,56 +368,67 @@ function Catalogs() {
         ) : (
           <>
             <div className="bg-white shadow-sm p-2 sm:p-4 border-b border-gray-200">
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between max-w-7xl mx-auto space-y-2 sm:space-y-0 sm:space-x-2">
-    {/* Back Button and Search Bar Container */}
-    <div className="flex flex-row items-center  space-x-2 w-full sm:w-auto">
-      <div className="flex-shrink-0">
-        <button
-          onClick={handleBack}
-          className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 bg-white border border-gray-200 rounded shadow-md cursor-pointer hover:bg-gray-50 transition-all duration-200"
-        >
-          <ArrowLeftIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
-        </button>
-      </div>
-      <div className="flex-grow">
-        <input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          type="text"
-          placeholder="Search Catalogs Items..."
-          className="w-full sm:w-[300px] md:w-[400px] shadow-lg border border-gray-200 rounded px-3 sm:px-5 h-8 sm:h-10 py-1 sm:py-2 text-sm sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all"
-        />
-      </div>
-    </div>
-    {/* Archive and Download Buttons Container */}
-    <div className="flex flex-row justify-end space-x-2 w-full sm:w-auto ">
-      <button
-        onClick={archiveCatalogItems}
-        disabled={buttonLoading || selectedItemIds.length === 0}
-        className="flex items-center bg-[var(--color-primary)] justify-center w-full sm:w-auto h-8 sm:h-10 px-2 sm:px-5 py-1 sm:py-2  border border-gray-200 rounded shadow-md cursor-pointer hover:bg-[#0095CC]  transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-lg"
-      >
-        {buttonLoading ? (
-          <FiLoader className="h-4 w-4 sm:h-5 sm:w-5 animate-spin mx-auto" />
-        ) : (
-          <span className="font-semibold text-white">Archive</span>
-        )}
-      </button>
-      <button
-        onClick={downloadPDF}
-        className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 bg-white border border-gray-200 rounded-full shadow-md hover:bg-gray-200 transition-all duration-200"
-        title="Download as PDF"
-      >
-        <DocumentArrowDownIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
-      </button>
-    </div>
-  </div>
-</div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between max-w-7xl mx-auto space-y-2 sm:space-y-0 sm:space-x-2">
+                {/* Back Button and Search Bar Container */}
+                <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={handleBack}
+                      className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 bg-white border border-gray-200 rounded shadow-md cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <ArrowLeftIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
+                    </button>
+                  </div>
+                  <div className="flex-grow">
+                    <input
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      type="text"
+                      placeholder="Search Catalogs Items..."
+                      className="w-full sm:w-[300px] md:w-[400px] shadow-lg border border-gray-200 rounded px-3 sm:px-5 h-8 sm:h-10 py-1 sm:py-2 text-sm sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all"
+                    />
+                  </div>
+                </div>
+                {/* Status Filter Dropdown */}
+                <div className="flex-grow">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full sm:w-[150px] md:w-[200px] shadow-lg border border-gray-200 rounded px-3 sm:px-5 h-8 sm:h-10 py-1 sm:py-2 text-sm sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all bg-white text-gray-700"
+                  >
+                    <option value="ALL">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                </div>
+                {/* Archive and Download Buttons Container */}
+                <div className="flex flex-row justify-end space-x-2 w-full sm:w-auto">
+                  <button
+                    onClick={archiveCatalogItems}
+                    disabled={buttonLoading || selectedItemIds.length === 0}
+                    className="flex items-center bg-[var(--color-primary)] justify-center w-full sm:w-auto h-8 sm:h-10 px-2 sm:px-5 py-1 sm:py-2 border border-gray-200 rounded shadow-md cursor-pointer hover:bg-[#0095CC] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-lg text-white"
+                  >
+                    {buttonLoading ? (
+                      <FiLoader className="h-4 w-4 sm:h-5 sm:w-5 animate-spin mx-auto" />
+                    ) : (
+                      <span className="font-semibold">Archive</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={downloadPDF}
+                    className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 bg-white border border-gray-200 rounded-full shadow-md hover:bg-gray-200 transition-all duration-200"
+                    title="Download as PDF"
+                  >
+                    <DocumentArrowDownIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                  </button>
+                </div>
+              </div>
+            </div>
             {error && (
               <div className="text-center py-4">
                 <p className="text-red-500">{error}</p>
               </div>
             )}
-
             <div className="container mx-auto px-4 sm:px-6 py-4">
               <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
                 <div className="overflow-x-auto">
@@ -425,12 +443,6 @@ function Catalogs() {
                     </div>
                   ) : (
                     <>
-                      {/* <div className="flex items-center justify-between px-10 py-2">
-                        <p className="font-medium">
-                          Showing {currentItems.length} catalog items
-                        </p>
-                        
-                      </div> */}
                       <table className="w-full table-fixed divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
@@ -440,8 +452,11 @@ function Catalogs() {
                             <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-3 text-left text-[0.7rem] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
                               ID
                             </th>
-                            <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-3 text-left text-[0.7rem] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-[70%]">
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-3 text-left text-[0.7rem] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-[50%]">
                               Name
+                            </th>
+                            <th className="px-3 py-2 sm:px-4 sm:py-3 lg:px-6 lg:py-3 text-left text-[0.7rem] sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
+                              Status
                             </th>
                           </tr>
                         </thead>
@@ -449,24 +464,22 @@ function Catalogs() {
                           {paginatedItems.map((catalogItem) => (
                             <tr
                               key={catalogItem.ID}
-                              onClick={() => handleRowClick(catalogItem.ID)}
+                              onClick={() => handleRowClick(catalogItem.ID, catalogItem.Archived)}
                               className={`${
                                 selectedItemIds.includes(catalogItem.ID)
                                   ? "bg-blue-100"
                                   : "hover:bg-gray-50"
-                              } transition-colors duration-150 cursor-pointer`}
+                              } transition-colors duration-150 ${!catalogItem.Archived ? "cursor-pointer" : "cursor-default"}`}
                             >
                               <td className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 lg:py-2 text-[0.75rem] sm:text-sm font-medium text-gray-900 w-[10%]">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedItemIds.includes(
-                                    catalogItem.ID
-                                  )}
-                                  onChange={() =>
-                                    handleRowClick(catalogItem.ID)
-                                  }
-                                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                />
+                                {!catalogItem.Archived && (
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedItemIds.includes(catalogItem.ID)}
+                                    onChange={() => handleRowClick(catalogItem.ID, catalogItem.Archived)}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  />
+                                )}
                               </td>
                               <td className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 lg:py-2 text-[0.75rem] sm:text-sm font-medium text-gray-900 w-[20%]">
                                 {catalogItem.ID || "N/A"}
@@ -474,13 +487,16 @@ function Catalogs() {
                               <td className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 lg:py-4 text-[0.75rem] sm:text-sm font-medium text-gray-900 truncate overflow-hidden">
                                 {catalogItem.Name || "N/A"}
                               </td>
+                              <td className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 lg:py-2 text-[0.75rem] sm:text-sm font-medium text-gray-900 w-[20%]">
+                                {catalogItem.Archived ? "Archived" : "Active"}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                       {currentItems.length > itemsPerPage && (
-                        <div className="bg-gray-50 px-6 py-3 flex items-center justify-around  border-t border-gray-200">
-                          <div className="flex items-center  space-x-2">
+                        <div className="bg-gray-50 px-6 py-3 flex items-center justify-around border-t border-gray-200">
+                          <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handlePageChange(currentPage - 1)}
                               disabled={currentPage === 1}
@@ -488,7 +504,6 @@ function Catalogs() {
                             >
                               <ChevronLeftIcon className="h-5 w-5" />
                             </button>
-
                             {getPaginationRange().map((page, index) => (
                               <React.Fragment key={index}>
                                 {page === "..." ? (
@@ -503,16 +518,13 @@ function Catalogs() {
                                         ? "bg-[var(--color-primary)] text-white"
                                         : "bg-white text-gray-700 hover:bg-gray-100"
                                     }`}
-                                    aria-current={
-                                      currentPage === page ? "page" : undefined
-                                    }
+                                    aria-current={currentPage === page ? "page" : undefined}
                                   >
                                     {page}
                                   </button>
                                 )}
                               </React.Fragment>
                             ))}
-
                             <button
                               onClick={() => handlePageChange(currentPage + 1)}
                               disabled={currentPage === totalPages}
@@ -522,7 +534,6 @@ function Catalogs() {
                             </button>
                           </div>
                         </div>
-                        
                       )}
                     </>
                   )}
