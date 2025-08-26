@@ -2,21 +2,18 @@ import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { XMarkIcon, Bars3Icon } from "@heroicons/react/24/outline";
-import { useSelector, useDispatch } from "react-redux";
-import { setCatalogs } from "../../store/slices/CatalogSlice";
+
 import companyLogo from "../../assets/simproBluehorizontalLogo.png";
 
 function Sidebar() {
-  const companyID = useSelector((state) => state.prebuild?.companyId);
-  const BASE_URL = import.meta.env.VITE_API_URL;
-  const dispatch = useDispatch();
+  
   const navigate = useNavigate();
   const location = useLocation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [hoveredSupplier, setHoveredSupplier] = useState(false);
-  const page = 1;
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -34,16 +31,16 @@ function Sidebar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleCatalog = (companyID, page) => {
-    if (!companyID) {
-      console.error("Company ID not found");
-      return;
-    }
-    fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => dispatch(setCatalogs(data.catalogs)))
-      .catch(console.error);
-  };
+  // const handleCatalog = (companyID, page) => {
+  //   if (!companyID) {
+  //     console.error("Company ID not found");
+  //     return;
+  //   }
+  //   fetch(`${BASE_URL}/catalogs/allcatalogs?companyID=${companyID}&page=${page}`)
+  //     .then((res) => (res.ok ? res.json() : Promise.reject()))
+  //     .then((data) => dispatch(setCatalogs(data.catalogs)))
+  //     .catch(console.error);
+  // };
 
   const toggleSidebar = () => setIsOpen(!isOpen);
   const closeSidebar = () => isMobile && setIsOpen(false);
@@ -60,12 +57,12 @@ function Sidebar() {
   };
 
   const menuItems = [
-    { name: "Prebuilds", path: "/companies/prebuilds" },
     {
       name: "Catalogs",
-      path: "/companies/catalogs",
-      action: () => handleCatalog(companyID, page),
+      path: "/companies/catalogs"
     },
+    { name: "Prebuilds", path: "/companies/prebuilds" },
+    
     { name: "Quotes", path: "/companies/quotes" },
     { name: "Jobs", path: "/companies/jobs" },
     { name: "Suppliers" },

@@ -3,7 +3,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { DateRange } from "react-date-range";
 import { subDays, format } from "date-fns";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, XMarkIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import { FiLoader } from "react-icons/fi";
 import { motion } from "framer-motion";
 import Select from "../../../components/ui/Select";
@@ -11,10 +11,9 @@ import Sidebar from "../../../components/sidebar/Sidebar";
 import { useSelector, useDispatch } from "react-redux";
 import verticalLogo from "../../../assets/simproSilverHorizantalLogo.png";
 import axios from "axios";
-import {
-  setSupplierInvoice,
-  setSupplierReceipts,
-} from "../../../store/slices/supplierInvoiceSlice";
+import {setSupplierInvoice, setSupplierReceipts,} from "../../../store/slices/supplierInvoiceSlice";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function SupplierInvoices() {
   const dispatch = useDispatch();
@@ -157,8 +156,8 @@ export default function SupplierInvoices() {
         params: {
           companyID: companyId,
           vendorOrderID: selectedId,
-          vendorReceiptID: vendorReceiptID
-        }
+          vendorReceiptID: vendorReceiptID,
+        },
       })
       .then((res) => {
         setSelectedCatalogDetails(res?.data?.vendorReceiptCatalogs || []);
@@ -169,6 +168,8 @@ export default function SupplierInvoices() {
       })
       .finally(() => setDetailsLoading(false));
   };
+  // console.log(selectedCatalogDetails);
+  
 
   if (isLoading && supplierInvoice.length === 0) {
     return (
@@ -179,7 +180,35 @@ export default function SupplierInvoices() {
         </p>
       </div>
     );
-  }
+  };
+
+  const downloadPDF = () => {
+      const doc = new jsPDF();
+      
+      // Apply the autoTable plugin to jsPDF
+      autoTable(doc, {
+        startY: 40,
+        head: [["ID", "Vendor Invoice", "	Issued Date", "	Due Date"]],
+        body: filteredItems.map((item) => [
+          item?.ID || "N/A",
+          item?.VendorInvoiceNo || "N/A",
+          item?.DateIssued ?? "—",
+          item?.DateDate ?? "—",
+        ]),
+        theme: "striped",
+        headStyles: { fillColor: [59, 130, 246] },
+        styles: { fontSize: 10 },
+        margin: { top: 40 },
+      });
+  
+      // Add title
+      doc.setFontSize(18);
+      doc.text("Prebuilds Report", 14, 20);
+      // Add date
+      doc.setFontSize(12);
+      doc.text(`Generated on: ${format(new Date(), "MMM dd, yyyy")}`, 14, 30);
+      doc.save(`prebuilds_report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+    };
 
   return (
     <motion.div
@@ -189,9 +218,9 @@ export default function SupplierInvoices() {
       className="min-h-screen bg-gray-50 text-gray-800 font-sans flex"
     >
       <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <header className="bg-white shadow-sm  h-16 flex items-center justify-between px-4 sm:px-6 border-b">
-          <h1 className="text-lg ml-12 sm:text-xl md:text-2xl font-semibold text-gray-800  md:ml-6">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 border-b">
+          <h1 className="text-lg ml-12 sm:text-xl md:text-2xl font-semibold text-gray-800 md:ml-6">
             Supplier Invoices
           </h1>
           <img 
@@ -203,20 +232,17 @@ export default function SupplierInvoices() {
 
         <div className="sticky top-0 z-10 bg-white shadow-sm p-3 sm:p-4 md:p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 max-w-7xl mx-auto">
-            <div className="w-full min-w-0 relative">
+            <div className="w-full sm:w-auto min-w-[200px] relative">
               <input
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
                 value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 type="text"
-                placeholder="Search receipts..."
-                className="w-full shadow border border-gray-200 rounded px-3 sm:px-4 h-10 sm:h-12 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all"
+                placeholder="Search Catalogs Items..."
+                className="shadow-lg border border-gray-200 rounded px-5 h-[50px] py-4 text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition-all w-full"
               />
             </div>
 
-            <div className="w-full min-w-0">
+            <div className="w-full min-w-0 mb-2 cursor-pointer ">
               <Select
                 value={selectedId || ""}
                 onValueChange={onInvoiceChange}
@@ -241,38 +267,52 @@ export default function SupplierInvoices() {
               />
             </div>
 
-            <div className="w-full min-w-0 relative" ref={dateRangeRef}>
-              <div
-                className="flex items-center h-10 sm:h-12 px-3 sm:px-4 py-2 bg-white border border-gray-200 rounded shadow cursor-pointer hover:bg-gray-50 transition-all duration-200"
-                onClick={() => setShowDateRange(!showDateRange)}
-              >
-                <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-gray-500" />
-                <div className="truncate">
-                  <p className="text-sm sm:text-base font-semibold text-gray-700 truncate">
-                    Date Range
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-600 truncate">
-                    {format(dateRange[0].startDate, "MMM dd, yyyy")} -{" "}
-                    {format(dateRange[0].endDate, "MMM dd, yyyy")}
-                  </p>
-                </div>
-              </div>
-
-              {showDateRange && (
-                <div className="absolute z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
-                  <DateRange
-                    editableDateInputs={true}
-                    onChange={handleDateChange}
-                    moveRangeOnFirstSelection={false}
-                    ranges={dateRange}
-                    maxDate={new Date()}
-                    className="border-0"
-                  />
-                </div>
-              )}
-            </div>
+            <div
+                          className="w-full sm:w-auto min-w-[200px] relative"
+                          ref={dateRangeRef}
+                        >
+                          <div
+                            className="flex items-center h-[50px] px-5 py-4 bg-white border border-gray-200 rounded shadow-lg cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                            onClick={() => setShowDateRange(!showDateRange)}
+                          >
+                            <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
+                            <div className="truncate">
+                              <p className="text-lg font-semibold text-gray-700 truncate">
+                                Date Range
+                              </p>
+                              <p className="text-sm text-gray-600 truncate">
+                                {format(dateRange[0].startDate, "MMM dd, yyyy")} -{" "}
+                                {format(dateRange[0].endDate, "MMM dd, yyyy")}
+                              </p>
+                            </div>
+                          </div>
+            
+                          {showDateRange && (
+                            <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
+                              <DateRange
+                                editableDateInputs={true}
+                                onChange={handleDateChange}
+                                moveRangeOnFirstSelection={false}
+                                ranges={dateRange}
+                                maxDate={new Date()}
+                                className="border-0"
+                              />
+                            </div>
+                          )}
+                        </div>
           </div>
         </div>
+
+        { filteredItems.length === 0 ? null: ( <div className="flex">
+                  <p className="pl-10 pt-2 font-medium">showing {currentItems.length} prebuilds items </p>
+                  <button
+                      onClick={downloadPDF}
+                      className="p-2 rounded-full hover:bg-gray-200 transition-all duration-200"
+                      title="Download as PDF"
+                    >
+                      <DocumentArrowDownIcon className="h-6 w-6 text-gray-600" />
+                    </button>
+                </div>)}
 
         <div className="flex-1 container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
           {Array.isArray(supplierInvoice) && supplierInvoice.length === 0 ? (
@@ -284,8 +324,8 @@ export default function SupplierInvoices() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-              <div className="overflow-x-auto">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-full overflow-x-hidden">
+              <div className="w-full max-h-[500px] overflow-y-auto overflow-x-auto">
                 {isLoading ? (
                   <div className="flex flex-col items-center py-6 sm:py-8">
                     <FiLoader className="animate-spin text-[var(--color-primary)] text-2xl sm:text-3xl mb-2" />
@@ -310,23 +350,25 @@ export default function SupplierInvoices() {
                     </p>
                   </div>
                 ) : (
-                  <>
+                  
+
+                  <div className="min-w-[900px]">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 sticky top-0 z-10">
                         <tr>
-                          <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="w-[10%] px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             ID
                           </th>
-                          <th className="sm:px-1 md:px-4 sm:py-1 md:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="w-[15%] px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Vendor Invoice
                           </th>
-                          <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="w-[15%] px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Issued Date
                           </th>
-                          <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="w-[15%] px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Due Date
                           </th>
-                          <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="w-[15%] px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             More
                           </th>
                         </tr>
@@ -334,22 +376,25 @@ export default function SupplierInvoices() {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {currentItems.map((item, idx) => (
                           <tr key={item?.ID || idx} className="hover:bg-gray-50">
-                            <td className="sm:px-1 md:px-4 sm:text-center md:text-left sm:py-1 md:py-3 whitespace-nowrap  sm:text-sm font-medium text-gray-900">
+                            <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                               {item?.ID || "N/A"}
                             </td>
-                            <td className="sm:px-1 md:px-4 text-center md:text-left sm:py-1 md:py-3 whitespace-nowrap  sm:text-sm text-gray-500">
+                            <td
+                              className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-sm text-gray-500 overflow-hidden text-ellipsis max-w-[150px] md:max-w-[200px]"
+                              title={item?.VendorInvoiceNo || "—"}
+                            >
                               {item?.VendorInvoiceNo || "—"}
                             </td>
-                            <td className="sm:px-1 md:px-4 sm:py-1 md:py-3 whitespace-nowrap  sm:text-sm text-gray-500">
+                            <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-sm text-gray-500">
                               {item?.DateIssued || "—"}
                             </td>
-                            <td className="sm:px-1 md:px-4 sm:py-2 md:py-3 whitespace-nowrap  sm:text-sm text-gray-500">
-                              {item?.DueDate || "-"}
+                            <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-sm text-gray-500">
+                              {item?.DueDate || "—"}
                             </td>
-                            <td className="sm:px-1 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                            <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-sm text-gray-500">
                               <button
                                 onClick={() => handleViewCatalogs(item?.ID)}
-                                className="sm:px-1 md:px-3 py-1 text-xs sm:text-xsm md:text-sm  bg-[var(--color-primary)] text-white rounded hover:bg-[#007EA8] transition-colors"
+                                className="px-3 py-1 text-sm bg-[var(--color-primary)] text-white rounded hover:bg-[#007EA8] transition-colors"
                               >
                                 View Catalogs
                               </button>
@@ -358,106 +403,92 @@ export default function SupplierInvoices() {
                         ))}
                       </tbody>
                     </table>
-
-                    {filteredItems.length > itemsPerPage && (
-                      <div className="bg-gray-50 px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between border-t border-gray-200">
-                        <div className="flex-1 flex justify-between sm:hidden">
-                          <button
-                            onClick={() =>
-                              setCurrentPage((p) => Math.max(p - 1, 1))
-                            }
-                            disabled={currentPage === 1}
-                            className="relative inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                          >
-                            Previous
-                          </button>
-                          <button
-                            onClick={() =>
-                              setCurrentPage((p) => Math.min(p + 1, totalPages))
-                            }
-                            disabled={currentPage === totalPages}
-                            className="ml-2 relative inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                          >
-                            Next
-                          </button>
-                        </div>
-                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-xs sm:text-sm text-gray-700">
-                              Showing{" "}
-                              <span className="font-medium">
-                                {indexOfFirstItem + 1}
-                              </span>{" "}
-                              to{" "}
-                              <span className="font-medium">
-                                {Math.min(
-                                  indexOfLastItem,
-                                  filteredItems.length
-                                )}
-                              </span>{" "}
-                              of{" "}
-                              <span className="font-medium">
-                                {filteredItems.length}
-                              </span>{" "}
-                              results
-                            </p>
-                          </div>
-                          <div>
-                            <nav
-                              className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                              aria-label="Pagination"
-                            >
-                              <button
-                                onClick={() =>
-                                  setCurrentPage((p) => Math.max(p - 1, 1))
-                                }
-                                disabled={currentPage === 1}
-                                className="relative inline-flex items-center px-2 py-1 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50"
-                              >
-                                <span className="sr-only">Previous</span>
-                                &larr;
-                              </button>
-                              <div className="flex items-center px-3 py-1 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
-                                Page {currentPage} of {totalPages}
-                              </div>
-                              <button
-                                onClick={() =>
-                                  setCurrentPage((p) =>
-                                    Math.min(p + 1, totalPages)
-                                  )
-                                }
-                                disabled={currentPage === totalPages}
-                                className="relative inline-flex items-center px-2 py-1 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50"
-                              >
-                                <span className="sr-only">Next</span>
-                                &rarr;
-                              </button>
-                            </nav>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
               </div>
+
+              {filteredItems.length > itemsPerPage && (
+                <div className="bg-gray-50 px-3 py-2 md:px-4 md:py-3 flex items-center justify-between border-t border-gray-200">
+                  <div className="flex-1 flex justify-between sm:hidden">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="ml-2 relative inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                        <span className="font-medium">{Math.min(indexOfLastItem, filteredItems.length)}</span> of{" "}
+                        <span className="font-medium">{filteredItems.length}</span> results
+                      </p>
+                    </div>
+                    <div>
+                      <nav
+                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center px-2 py-1 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                          <span className="sr-only">Previous</span>
+                          &larr;
+                        </button>
+                        <div className="flex items-center px-3 py-1 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                          Page {currentPage} of {totalPages}
+                        </div>
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                          className="relative inline-flex items-center px-2 py-1 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                          <span className="sr-only">Next</span>
+                          &rarr;
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-400 bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+        <div className="fixed inset-0 bg-gray-400 bg-opacity-50 flex items-center justify-center z-50 p-2 xs:p-3 sm:p-4">
           <div 
             ref={modalRef}
-            className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] overflow-y-auto"
+            className="bg-white p-3 xs:p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-[90vw] xs:max-w-[80vw] sm:max-w-md max-h-[80vh] overflow-y-auto"
           >
-            <h2 className="text-lg font-semibold mb-3 sm:mb-4">Catalog Items</h2>
+            <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <h2 className="text-base xs:text-lg font-semibold">Catalog Items</h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label="Close modal"
+              >
+                <XMarkIcon className="h-5 w-5 xs:h-6 xs:w-6" />
+              </button>
+            </div>
             
             <div className="mb-3 sm:mb-4">
               <input
                 type="text"
                 placeholder="Search by ID or Name..."
-                className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full p-2 text-sm xs:text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 value={catalogSearchTerm}
                 onChange={(e) => setCatalogSearchTerm(e.target.value)}
               />
@@ -465,21 +496,21 @@ export default function SupplierInvoices() {
 
             {detailsLoading ? (
               <div className="flex justify-center text-[var(--color-primary)] items-center py-4">
-                <FiLoader className="animate-spin  text-2xl" />
-                lodaing...
+                <FiLoader className="animate-spin text-xl xs:text-2xl" />
+                <span className="ml-2 text-sm xs:text-base">Loading...</span>
               </div>
             ) : filteredCatalogItems.length > 0 ? (
               <div className="space-y-2 sm:space-y-3">
                 {filteredCatalogItems.map((item, index) => (
                   <div key={index} className="border-b py-2 sm:py-3 last:border-b-0">
-                    <p className="font-semibold text-sm sm:text-base">ID: {item.ID || "N/A"}</p>
-                    <p className="text-xs sm:text-sm text-gray-600">Name: {item.Name || "N/A"}</p>
-                    <p className="text-xs sm:text-sm">Part No: {item.PartNo || "N/A"}</p>
+                    <p className="font-semibold text-sm xs:text-base">ID: {item.ID || "N/A"}</p>
+                    <p className="text-xs xs:text-sm text-gray-600">Name: {item.Name || "N/A"}</p>
+                    <p className="text-xs xs:text-sm">Part No: {item.PartNo || "N/A"}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4 text-sm sm:text-base">
+              <p className="text-gray-500 text-center py-4 text-sm xs:text-base">
                 {catalogSearchTerm ? "No matching items found" : "No catalog items found"}
               </p>
             )}
@@ -487,7 +518,7 @@ export default function SupplierInvoices() {
             <div className="mt-3 sm:mt-4 flex justify-end">
               <button 
                 onClick={() => setIsModalOpen(false)} 
-                className="px-3 sm:px-4 py-1 sm:py-2 cursor-pointer bg-[var(--color-primary)] text-white rounded hover:bg-gray-600 transition-colors text-sm sm:text-base"
+                className="px-2 xs:px-3 sm:px-4 py-1 sm:py-2 cursor-pointer bg-[var(--color-primary)] text-white rounded hover:bg-gray-600 transition-colors text-sm xs:text-base"
               >
                 Close
               </button>

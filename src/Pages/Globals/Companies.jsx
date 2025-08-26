@@ -72,7 +72,7 @@ export default function Companies() {
             companyId: parseInt(selectedCompany),
           })
         );
-        navigate("/companies/prebuilds");
+        navigate("/companies/catalogs");
       } else {
         alert("Failed to fetch prebuilds");
       }
@@ -141,7 +141,7 @@ export default function Companies() {
             <button
               onClick={handleNext}
               disabled={isLoading || !selectedCompany}
-              className={`px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-lg font-medium text-white shadow-md transition-all flex items-center
+              className={`px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base cursor-pointer rounded-lg font-medium text-white shadow-md transition-all flex items-center
                 ${
                   isLoading || !selectedCompany
                     ? "bg-white cursor-not-allowed"

@@ -5,12 +5,14 @@ import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format, subYears } from "date-fns";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, DocumentArrowDownIcon} from "@heroicons/react/24/outline";
 import { useSelector, useDispatch } from "react-redux";
 import { setQuotes } from "../../store/slices/QuotesSlice";
 import DOMPurify from "dompurify";
 import { motion } from "framer-motion";
 import { FiLoader } from "react-icons/fi";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const Quotes = () => {
   const companyID = useSelector((state) => state.prebuild?.companyId);
@@ -22,6 +24,13 @@ const Quotes = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showDateRange, setShowDateRange] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const stripHtml = (html) => {
+    if (!html) return "--";
+    const div = document.createElement("div");
+    div.innerHTML = DOMPurify.sanitize(html); // Sanitize first for safety
+    return div.textContent || div.innerText || "--";
+  };
 
   const today = format(new Date(), "yyyy-MM-dd");
   const twoYearsAgo = format(subYears(new Date(), 2), "yyyy-MM-dd");
@@ -60,7 +69,9 @@ const Quotes = () => {
         }
         throw new Error("Failed to fetch catalogs");
       })
+
       .then((data) => {
+        console.log(data);
         dispatch(setQuotes(data.quotes));
       })
       .catch((err) => {
@@ -91,6 +102,39 @@ const Quotes = () => {
       item.Description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+    const downloadPDF = () => {
+  const doc = new jsPDF();
+
+  // Set font and size for the heading
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Quotes prebuilds items", 14, 20); // Heading at y=20
+
+  // Set font and size for the date
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.text(`Generated on: ${format(new Date(), "MMM dd, yyyy")}`, 14, 30); // Date at y=30
+
+  // Apply the autoTable plugin to jsPDF
+  autoTable(doc, {
+    startY: 40, // Start table below the heading and date
+    head: [["ID", "Name", "Quantity", "Price"]],
+    body: currentItems.map((item) => [
+      item?.ID || "N/A",
+      stripHtml(item?.Description) || "N/A",
+      item?.Total?.Tax ?? "—",
+      item?.IsClosed ?? "—",
+    ]),
+    theme: "striped",
+    headStyles: { fillColor: [59, 130, 246] },
+    styles: { fontSize: 10 },
+    margin: { top: 40, left: 14, right: 14 },
+  });
+
+  // Save the PDF
+  doc.save(`prebuilds_report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+};
+
   return (
     <motion.div
       className="min-h-screen bg-gray-50 text-gray-800 font-sans flex"
@@ -102,12 +146,16 @@ const Quotes = () => {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white sticky top-0 z-10 shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-2xl ml-12 lg:ml-0 font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+          <h1
+            className="text-2xl ml-12 lg:ml-0 font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
             Quotes
           </h1>
           <img src={verticalLogo} alt="Company Logo" className="h-10 w-auto" />
         </header>
+
+
 
         {/* Filters */}
         <div className=" bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
@@ -159,6 +207,16 @@ const Quotes = () => {
             </div>
           </div>
         </div>
+        { currentItems.length === 0 ? null: ( <div className="flex">
+          <p className="pl-10 pt-2 font-medium">showing {currentItems.length} prebuilds items </p>
+          <button
+              onClick={downloadPDF}
+              className="p-2 rounded-full hover:bg-gray-200 transition-all duration-200"
+              title="Download as PDF"
+            >
+              <DocumentArrowDownIcon className="h-6 w-6 text-gray-600" />
+            </button>
+        </div>)}
 
         {/* Table or Loader */}
         <div className="container mx-auto px-4 sm:px-6 py-8">
@@ -174,78 +232,51 @@ const Quotes = () => {
                   <p className="text-gray-500">No Quotes found.</p>
                 </div>
               ) : (
-                <table className="min-w-full divide-y divide-gray-200 table-fixed">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Descriptiond
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        TAX
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Open
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentItems.map((quote) => (
-                      <tr
-                        key={quote.ID}
-                        className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setSelectedQuote(quote)}
-                      >
-                        <td className="px-2 py-1 whitespace-nowrap text-sm text-gray-500">
-                          {" "}
-                          {/* Reduced padding */}
-                          {quote.ID}
-                        </td>
-                        <td
-                          className="px-2 py-1 text-sm font-medium text-gray-900" // Reduced padding + smaller font
-                          style={{
-                            maxWidth: "100px",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 1,
-                            WebkitBoxOrient: "vertical",
-                            lineHeight: "1.2",
-                          }}
-                          title={
-                            quote.Description
-                              ? DOMPurify.sanitize(quote.Description).replace(
-                                  /<[^>]+>/g,
-                                  ""
-                                )
-                              : "--"
-                          }
-                        >
-                          {quote.Description ? (
-                            <span
-                              dangerouslySetInnerHTML={{
-                                __html: DOMPurify.sanitize(quote.Description),
-                              }}
-                            />
-                          ) : (
-                            "--"
-                          )}
-                        </td>
-                        <td className="px-2 py-1 whitespace-nowrap md:px-6 md:py-3  text-sm text-gray-500">
-                          {" "}
-                          {/* Reduced padding */}
-                          {quote.Total?.Tax}
-                        </td>
-                        <td className="px-2 py-1 whitespace-nowrap text-center text-sm text-gray-500 w-16 ">
-                          {" "}
-                          {quote.IsClosed ? "Yes" : "No"}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-1 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                          ID
+                        </th>
+                        <th className="px-2 py-1 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[30%] sm:w-[25%] md:w-[20%]">
+                          Description
+                        </th>
+                        <th className="px-2 py-1 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">
+                          TAX
+                        </th>
+                        <th className="px-2 py-1 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">
+                          Open
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {currentItems.map((quote) => (
+                        <tr
+                          key={quote.ID}
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setSelectedQuote(quote)}
+                        >
+                          <td className="px-2 py-1 whitespace-nowrap text-sm text-gray-500 md:px-6 md:py-3">
+                            {quote.ID}
+                          </td>
+                          <td
+                            className="px-2 py-1 text-sm font-medium text-gray-900 md:px-6 md:py-3 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-[200px] md:max-w-[250px]"
+                            title={stripHtml(quote.Description)}
+                          >
+                            {stripHtml(quote.Description)}
+                          </td>
+                          <td className="px-2 py-1 whitespace-nowrap text-sm text-gray-500 md:px-6 md:py-3">
+                            {quote.Total?.Tax || "--"}
+                          </td>
+                          <td className="px-2 py-1 whitespace-nowrap text-center text-sm text-gray-500 w-16 md:px-6 md:py-3">
+                            {quote.IsClosed ? "Yes" : "No"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
 
               {/* Custom Popup */}

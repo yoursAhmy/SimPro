@@ -3,7 +3,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { DateRange } from "react-date-range";
 import { subDays, format } from "date-fns";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import Select from "../../components/ui/Select";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { useSelector, useDispatch } from "react-redux";
@@ -11,6 +11,8 @@ import { setPrebuildItem } from "../../store/slices/PrebuildSlice";
 import verticalLogo from "../../assets/simproSilverHorizantalLogo.png";
 import { motion } from "framer-motion";
 import { FiLoader } from "react-icons/fi";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Prebuilds() {
   const dispatch = useDispatch();
@@ -38,18 +40,18 @@ export default function Prebuilds() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-const filteredItems = (prebuildItems || []).filter((item) => {
-  const nameMatch = (item?.Catalog?.Name || "")
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase());
+  const filteredItems = (prebuildItems || []).filter((item) => {
+    const nameMatch = (item?.Catalog?.Name || "")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
-  const idMatch = (item?.Catalog?.ID || "")
-    .toString()
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase());
+    const idMatch = (item?.Catalog?.ID || "")
+      .toString()
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
-  return nameMatch || idMatch;
-});
+    return nameMatch || idMatch;
+  });
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -64,6 +66,37 @@ const filteredItems = (prebuildItems || []).filter((item) => {
       setDateRange([selection]);
       setShowDateRange(false);
     }
+  };
+
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    
+    // Apply the autoTable plugin to jsPDF
+    autoTable(doc, {
+      startY: 40,
+      head: [["ID", "Name", "Quantity", "Price"]],
+      body: filteredItems.map((item) => [
+        item?.Catalog?.ID || "N/A",
+        item?.Catalog?.Name || "N/A",
+        item?.Quantity ?? "—",
+        item?.Catalog?.TradePrice ?? "—",
+      ]),
+      theme: "striped",
+      headStyles: { fillColor: [59, 130, 246] },
+      styles: { fontSize: 10 },
+      margin: { top: 40 },
+    });
+
+    // Add title
+    doc.setFontSize(18);
+    doc.text("Prebuilds Report", 14, 20);
+    
+    // Add date
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${format(new Date(), "MMM dd, yyyy")}`, 14, 30);
+    
+    // Save the PDF
+    doc.save(`prebuilds_report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
   };
 
   useEffect(() => {
@@ -81,12 +114,11 @@ const filteredItems = (prebuildItems || []).filter((item) => {
     };
   }, []);
 
-  // Loading state when prebuilds are not ready
   if (!prebuilds) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
         <FiLoader className="animate-spin text-[var(--color-primary)] text-4xl mb-3" />
-        <p className="text-lg md:text-xl text-[var(--color-primary)]  font-semibold">
+        <p className="text-lg md:text-xl text-[var(--color-primary)] font-semibold">
           Loading prebuilds...
         </p>
       </div>
@@ -102,23 +134,25 @@ const filteredItems = (prebuildItems || []).filter((item) => {
     >
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className=" bg-[var(--color-surface)] sticky top-0 z-10 shadow-sm h-16 flex items-center justify-between px-6 border-b">
-          <h1 className="text-xl ml-10 lg:ml-0 sm:text-2xl font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer "
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+        <header className="bg-[var(--color-surface)] sticky top-0 z-10 shadow-sm h-16 flex items-center justify-between px-6 border-b">
+          <h1
+            className="text-xl ml-10 lg:ml-0 sm:text-2xl font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
             Prebuilds
           </h1>
-          <img
-            src={verticalLogo}
-            alt="Company Logo"
-            className="h-8 sm:h-10 w-auto"
-          />
+          <div className="flex items-center space-x-4">
+            
+            <img
+              src={verticalLogo}
+              alt="Company Logo"
+              className="h-8 sm:h-10 w-auto"
+            />
+          </div>
         </header>
 
-        {/* Filters */}
-        <div className=" bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
+        <div className="bg-white shadow-sm p-4 sm:p-6 border-b border-gray-200">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5 max-w-7xl mx-auto">
-            {/* Search Bar */}
             <div className="w-full sm:w-auto min-w-[200px] relative">
               <input
                 onChange={(e) => {
@@ -132,12 +166,11 @@ const filteredItems = (prebuildItems || []).filter((item) => {
               />
             </div>
 
-            {/* Prebuild Dropdown */}
             <div className="w-full sm:w-auto min-w-[200px]">
               <Select
                 value={selectedPrebuildId || ""}
                 onValueChange={(selectedId) => {
-                  if (!companyId || !selectedId) return;
+                  if (companyId === undefined || companyId === null || !selectedId) return;
                   setIsLoading(true);
                   fetch(
                     `${BASE_URL}/prebuilds/prebuildcatalogs?companyID=${companyId}&prebuildID=${selectedId}`
@@ -159,49 +192,23 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                   label: pb?.Name || "Untitled",
                   value: pb?.ID || "",
                 }))}
-                className="w-full h-[50px] text-xs sm:text-base cursor-pointer " 
+                className="w-full h-[50px] text-xs sm:text-base cursor-pointer"
               />
             </div>
-
-            {/* Date Range Picker */}
-            {/* <div
-              className="w-full sm:w-auto min-w-[200px] relative"
-              ref={dateRangeRef}
-            >
-              <div
-                className="flex items-center h-[50px] px-5 py-4 bg-white border border-gray-200 rounded shadow-lg cursor-pointer hover:bg-gray-50 transition-all duration-200"
-                onClick={() => setShowDateRange(!showDateRange)}
-              >
-                <CalendarIcon className="h-5 w-5 mr-2 text-gray-500" />
-                <div className="truncate">
-                  <p className="text-lg font-semibold text-gray-700 truncate">
-                    Date Range
-                  </p>
-                  <p className="text-sm text-gray-600 truncate">
-                    {format(dateRange[0].startDate, "MMM dd, yyyy")} -{" "}
-                    {format(dateRange[0].endDate, "MMM dd, yyyy")}
-                  </p>
-                </div>
-              </div>
-
-              {showDateRange && (
-                <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
-                  <DateRange
-                    editableDateInputs={true}
-                    onChange={handleDateChange}
-                    moveRangeOnFirstSelection={false}
-                    ranges={dateRange}
-                    maxDate={new Date()}
-                    className="border-0"
-                  />
-                </div>
-              )}
-            </div> */}
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 container mx-auto px-4 sm:px-6 py-8">
+        { filteredItems.length === 0 ? null: ( <div className="flex">
+          <p className="pl-10 pt-2 font-medium">showing {currentItems.length} prebuilds items </p>
+          <button
+              onClick={downloadPDF}
+              className="p-2 rounded-full hover:bg-gray-200 transition-all duration-200"
+              title="Download as PDF"
+            >
+              <DocumentArrowDownIcon className="h-6 w-6 text-gray-600" />
+            </button>
+        </div>)}
+        <div className="flex-1 container mx-auto px-4 sm:px-6 py-6">
           {Array.isArray(prebuilds) && prebuilds.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="bg-white rounded-xl shadow-sm p-6 text-center max-w-md w-full">
@@ -214,9 +221,11 @@ const filteredItems = (prebuildItems || []).filter((item) => {
             <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
               <div className="overflow-x-auto">
                 {isLoading ? (
-                  <div className="flex flex-col items-center py-8">
+                  <div className="flex flex-col items-center py-6">
                     <FiLoader className="animate-spin text-[var(--color-primary)] text-3xl mb-2" />
-                    <p className="text-[var(--color-primary)]">Loading catalog items...</p>
+                    <p className="text-[var(--color-primary)]">
+                      Loading catalog items...
+                    </p>
                   </div>
                 ) : !selectedPrebuildId ? (
                   <div className="text-center py-8">
@@ -238,6 +247,7 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                   </div>
                 ) : (
                   <>
+                  
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
@@ -250,7 +260,7 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                           <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Quantity
                           </th>
-                          <th className="px-3 sm:px-4 md:px-6 py-2  sm:py-3 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Price
                           </th>
                         </tr>
@@ -260,6 +270,7 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                           <tr
                             key={item?.Catalog?.ID || idx}
                             className="hover:bg-gray-50"
+                            // {onClick(() => )}
                           >
                             <td className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 max-w-[150px] truncate">
                               {item?.Catalog?.ID || "N/A"}
@@ -268,8 +279,7 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                               {item?.Catalog?.Name || "N/A"}
                             </td>
                             <td
-                              className=" sm:px-0 md:px-6 sm:py-0 md:py-4 text-center text-xs sm:text-sm text-gray-500 
-                     w-[50px] sm:w-[70px] md:w-[100px] truncate"
+                              className="sm:px-0 md:px-6 sm:py-0 md:py-4 text-center text-xs sm:text-sm text-gray-500 w-[50px] sm:w-[70px] md:w-[100px] truncate"
                             >
                               {item?.Quantity ?? "—"}
                             </td>
@@ -280,7 +290,6 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                         ))}
                       </tbody>
                     </table>
-                    {/* Pagination */}
                     {filteredItems.length > itemsPerPage && (
                       <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
                         <div className="flex-1 flex justify-between">
@@ -289,9 +298,7 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                               setCurrentPage((p) => Math.max(p - 1, 1))
                             }
                             disabled={currentPage === 1}
-                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 
-                   text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50
-                   disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Previous
                           </button>
@@ -303,9 +310,7 @@ const filteredItems = (prebuildItems || []).filter((item) => {
                               setCurrentPage((p) => Math.min(p + 1, totalPages))
                             }
                             disabled={currentPage === totalPages}
-                            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 
-                   text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50
-                   disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Next
                           </button>
