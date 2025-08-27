@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "../../components/sidebar/Sidebar";
 import verticalLogo from "../../assets/simproSilverHorizantalLogo.png";
@@ -27,7 +28,7 @@ function Catalogs() {
   const dispatch = useDispatch();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("ALL"); // New state for status filter
+  const [filterStatus, setFilterStatus] = useState("ALL");
   const [showDateRange, setShowDateRange] = useState(false);
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
@@ -45,6 +46,7 @@ function Catalogs() {
   const [itemsPerPage] = useState(10);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [error, setError] = useState(null);
+  const [showArchivePopup, setShowArchivePopup] = useState(false);
 
   const dateRangeRef = useRef(null);
 
@@ -147,7 +149,7 @@ function Catalogs() {
 
   // Handle row click and checkbox toggle
   const handleRowClick = (id, archived) => {
-    if (archived) return; // Prevent selecting archived items
+    if (archived) return;
     setSelectedItemIds((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
     );
@@ -213,8 +215,9 @@ function Catalogs() {
     setIsSelectingStartDate(true);
     setCurrentPage(1);
     setSelectedItemIds([]);
-    setFilterStatus("ALL"); // Reset filter
+    setFilterStatus("ALL");
     setError(null);
+    setShowArchivePopup(false);
   };
 
   const archiveCatalogItems = async () => {
@@ -255,6 +258,7 @@ function Catalogs() {
       );
     } finally {
       setButtonLoading(false);
+      setShowArchivePopup(false);
     }
   };
 
@@ -296,7 +300,7 @@ function Catalogs() {
       <div className="flex-1 flex flex-col">
         <header className="bg-white sticky top-0 z-10 shadow-sm h-16 flex items-center justify-between px-6 border-b">
           <h1
-            className="text-2xl ml-10 lg:ml-0 font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer"
+            className="text-md md:text-2xl ml-10 lg:ml-0 font-semibold text-gray-800 hover:text-[var(--color-primary)] cursor-pointer"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             Material Catalog Items
@@ -369,7 +373,6 @@ function Catalogs() {
           <>
             <div className="bg-white shadow-sm p-2 sm:p-4 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between max-w-7xl mx-auto space-y-2 sm:space-y-0 sm:space-x-2">
-                {/* Back Button and Search Bar Container */}
                 <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
                   <div className="flex-shrink-0">
                     <button
@@ -389,7 +392,6 @@ function Catalogs() {
                     />
                   </div>
                 </div>
-                {/* Status Filter Dropdown */}
                 <div className="flex-grow">
                   <select
                     value={filterStatus}
@@ -401,10 +403,9 @@ function Catalogs() {
                     <option value="Archived">Archived</option>
                   </select>
                 </div>
-                {/* Archive and Download Buttons Container */}
                 <div className="flex flex-row justify-end space-x-2 w-full sm:w-auto">
                   <button
-                    onClick={archiveCatalogItems}
+                    onClick={() => setShowArchivePopup(true)}
                     disabled={buttonLoading || selectedItemIds.length === 0}
                     className="flex items-center bg-[var(--color-primary)] justify-center w-full sm:w-auto h-8 sm:h-10 px-2 sm:px-5 py-1 sm:py-2 border border-gray-200 rounded shadow-md cursor-pointer hover:bg-[#0095CC] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-lg text-white"
                   >
@@ -540,6 +541,36 @@ function Catalogs() {
                 </div>
               </div>
             </div>
+            {showArchivePopup && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md sm:max-w-lg mx-4 sm:mx-auto">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Confirm Archive
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Are you sure you want to archive the selected items?
+                  </p>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={() => setShowArchivePopup(false)}
+                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-all duration-200"
+                    >
+                      No
+                    </button>
+                    <button
+                      onClick={archiveCatalogItems}
+                      disabled={buttonLoading}
+                      className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-md hover:bg-[#0095CC] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      {buttonLoading ? (
+                        <FiLoader className="h-5 w-5 animate-spin mr-2" />
+                      ) : null}
+                      Archive
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
